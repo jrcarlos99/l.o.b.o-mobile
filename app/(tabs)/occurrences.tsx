@@ -21,7 +21,34 @@ const handleFilters = () => {
   Alert.alert("Filtros exibidos");
 };
 
-export default function Index() {
+const mockOccurrences = [
+  {
+    id: "#08421",
+    tipo: "Incêndio Residencial",
+    local: "Boa Viagem - Recife, PE",
+    dataHora: "03/09/2025 - 14:33",
+  },
+  {
+    id: "#08422",
+    tipo: "Acidente Veicular",
+    local: "BR-101 - Jaboatão dos Guararapes, PE",
+    dataHora: "05/09/2025 - 09:12",
+  },
+  {
+    id: "#08423",
+    tipo: "Resgate em Altura",
+    local: "Centro - Caruaru, PE",
+    dataHora: "06/09/2025 - 18:47",
+  },
+  {
+    id: "#08424",
+    tipo: "Vazamento de Gás",
+    local: "Casa Amarela - Recife, PE",
+    dataHora: "07/09/2025 - 11:25",
+  },
+];
+
+export default function OccurrencesPage() {
   const [periodFilter, setPeriodFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("tipo");
   const [regionFilter, setRegionFilter] = useState("regiao");
@@ -43,7 +70,7 @@ export default function Index() {
 
   return (
     <ParallaxScrollView
-      headerBackgroundColor={{ light: "#E5E4E4", dark: "#E5E4E4" }}
+      headerBackgroundColor={{ light: "#A1CEDC", dark: "#E5E4E4" }}
       headerImage={
         <View style={styles.headerContainer}>
           <View style={styles.headerRow}>
@@ -85,7 +112,7 @@ export default function Index() {
 
           {/* Filtros */}
           <View style={styles.headerExtras}>
-            <Text style={styles.headerText}>Estatísticas</Text>
+            <Text style={styles.headerText}>Minhas Ocorrências</Text>
 
             <View style={styles.filtersRow}>
               <View style={styles.filterBox}>
@@ -176,9 +203,22 @@ export default function Index() {
       }
     >
       <View style={styles.contentContainer}>
-        <Text>GRÁFICO 1</Text>
-        <Text>GRÁFICO 2</Text>
-        <Text>GRÁFICO 3</Text>
+        {mockOccurrences.map((item) => (
+          <View key={item.id} style={styles.card}>
+            <View>
+              <Text style={styles.cardId}>{item.id}</Text>
+              <Text style={styles.cardTitle}>{item.tipo}</Text>
+              <Text style={styles.cardLocal}>{item.local}</Text>
+              <Text style={styles.cardDate}>{item.dataHora}</Text>
+            </View>
+            <Pressable
+              onPress={() => Alert.alert("Detalhes", `Abrir ${item.tipo}`)}
+              style={styles.cardButton}
+            >
+              <Text style={styles.cardDetails}>Detalhes {">"}</Text>
+            </Pressable>
+          </View>
+        ))}
       </View>
     </ParallaxScrollView>
   );

@@ -43,7 +43,7 @@ export default function Index() {
 
   return (
     <ParallaxScrollView
-      headerBackgroundColor={{ light: "#E5E4E4", dark: "#E5E4E4" }}
+      headerBackgroundColor={{ light: "#A1CEDC", dark: "#E5E4E4" }}
       headerImage={
         <View style={styles.headerContainer}>
           <View style={styles.headerRow}>
@@ -85,7 +85,7 @@ export default function Index() {
 
           {/* Filtros */}
           <View style={styles.headerExtras}>
-            <Text style={styles.headerText}>Estatísticas</Text>
+            <Text style={styles.headerText}>Meus Relatórios</Text>
 
             <View style={styles.filtersRow}>
               <View style={styles.filterBox}>
@@ -176,9 +176,9 @@ export default function Index() {
       }
     >
       <View style={styles.contentContainer}>
-        <Text>GRÁFICO 1</Text>
-        <Text>GRÁFICO 2</Text>
-        <Text>GRÁFICO 3</Text>
+        <Text>RELATÓRIO 1</Text>
+        <Text>RELATÓRIO 2</Text>
+        <Text>RELATÓRIO 3</Text>
       </View>
     </ParallaxScrollView>
   );
