@@ -1,377 +1,440 @@
-import ParallaxScrollView from "@/components/parallax-scroll-view";
-import { MaterialIcons } from "@expo/vector-icons";
+import ActionButton from "@/components/occurrence/ActionButton";
+import FormField from "@/components/occurrence/FormField";
+import ImagePreviewList from "@/components/occurrence/ImagePreviewList";
+import LocationButton from "@/components/occurrence/LocationButton";
+import OfflineBanner from "@/components/occurrence/OfflineBanner";
+import PickerField from "@/components/occurrence/PickerField";
+import SubmitButton from "@/components/occurrence/SubmitButton";
+import { PendingOccurrence } from "@/components/occurrence/type";
+import useGPS from "@/hooks/useGPS";
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { Picker } from "@react-native-picker/picker";
-import { Image } from "expo-image";
-import { useState } from "react";
+import NetInfo from "@react-native-community/netinfo";
+import * as ImagePicker from "expo-image-picker";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
 import {
   Alert,
-  Button,
-  Platform,
-  Pressable,
+  Modal,
+  ScrollView,
   StyleSheet,
   Text,
+  TextInput,
+  TouchableOpacity,
   View,
 } from "react-native";
 
-const avatarUrl = "https://github.com/jrcarlos99.png";
+import SignaturePad from "@/components/occurrence/SignaturePad";
+import { colors } from "@/constants/colors";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const handleFilters = () => {
-  console.log("Filters button pressed");
-  Alert.alert("Filtros exibidos");
-};
+const STORAGE_KEY = "@pending_occurrences_v1";
 
-export default function Index() {
-  const [periodFilter, setPeriodFilter] = useState("");
-  const [typeFilter, setTypeFilter] = useState("tipo");
-  const [regionFilter, setRegionFilter] = useState("regiao");
-  const [statusFilter, setStatusFilter] = useState("status");
+export default function CreateOccurrence() {
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
 
+  const [showSignatureModal, setShowSignatureModal] = useState(false);
+
+  const [type, setType] = useState("");
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [vehicle, setVehicle] = useState("");
+  const [team, setTeam] = useState("");
+  const [description, setDescription] = useState("");
+  const [address, setAddress] = useState("");
+  const [images, setImages] = useState<{ uri: string; timestamp: string }[]>(
+    []
+  );
+  const [signatureText, setSignatureText] = useState(""); // substitui SignatureModal
+  const [syncing, setSyncing] = useState(false);
+  const [isConnected, setIsConnected] = useState<boolean | null>(true);
 
-  const handleDateChange = (_: any, selectedDate?: Date) => {
-    setShowDatePicker(Platform.OS === "ios");
-    if (selectedDate) setDate(selectedDate);
+  const { gps } = useGPS();
+
+  // network subscribe
+  React.useEffect(() => {
+    const unsub = NetInfo.addEventListener((s) => {
+      setIsConnected(!!s.isConnected);
+      if (s.isConnected) {
+        trySyncPending();
+      }
+    });
+    return unsub;
+  }, []);
+
+  // image picker
+  const onPickImage = async (fromCamera = false) => {
+    try {
+      const result = fromCamera
+        ? await ImagePicker.launchCameraAsync({
+            quality: 0.6,
+            allowsEditing: true,
+          })
+        : await ImagePicker.launchImageLibraryAsync({
+            quality: 0.6,
+            allowsEditing: true,
+          });
+
+      if (!result.canceled && result.assets?.length) {
+        const asset = result.assets[0];
+        setImages((p) => [
+          ...p,
+          { uri: asset.uri, timestamp: new Date().toISOString() },
+        ]);
+      }
+    } catch (err) {
+      console.warn(err);
+    }
   };
 
-  const formattedDate = date.toLocaleDateString("pt-BR", {
+  const removeImage = (idx: number) =>
+    setImages((p) => p.filter((_, i) => i !== idx));
+
+  // validation
+  const validate = () => {
+    if (!type) {
+      Alert.alert(
+        "Campo obrigatório",
+        "Por favor selecione o tipo de ocorrência."
+      );
+      return false;
+    }
+    if (!vehicle) {
+      Alert.alert("Campo obrigatório", "Por favor selecione a viatura.");
+      return false;
+    }
+    if (!team) {
+      Alert.alert("Campo obrigatório", "Por favor selecione a equipe.");
+      return false;
+    }
+    if (!description.trim()) {
+      Alert.alert("Campo obrigatório", "Por favor descreva a ocorrência.");
+      return false;
+    }
+    return true;
+  };
+
+  const makeId = () =>
+    `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
+  const savePending = async (payload: PendingOccurrence) => {
+    try {
+      const raw = await AsyncStorage.getItem(STORAGE_KEY);
+      const list: PendingOccurrence[] = raw ? JSON.parse(raw) : [];
+      list.push(payload);
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    } catch (err) {
+      console.warn(err);
+    }
+  };
+
+  const trySyncPending = async () => {
+    setSyncing(true);
+    try {
+      const raw = await AsyncStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const list: PendingOccurrence[] = JSON.parse(raw);
+      if (!list.length) return;
+      await new Promise((r) => setTimeout(r, 900));
+      await AsyncStorage.removeItem(STORAGE_KEY);
+      Alert.alert(
+        "Sincronização",
+        "Ocorrências pendentes foram sincronizadas."
+      );
+    } catch (err) {
+      console.warn(err);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!validate()) return;
+    const payload: PendingOccurrence = {
+      id: makeId(),
+      type,
+      datetime: date.toISOString(),
+      vehicle,
+      team,
+      description,
+      address,
+      gps,
+      images,
+      signature: signatureText || undefined, // usa texto provisório
+      createdAt: new Date().toISOString(),
+      synced: false,
+    };
+    await savePending(payload);
+    if (isConnected) {
+      await trySyncPending();
+      Alert.alert("Enviado", "Ocorrência enviada com sucesso.");
+    } else {
+      Alert.alert(
+        "Salvo offline",
+        "Sem conexão. A ocorrência foi salva localmente e será enviada quando houver rede."
+      );
+    }
+    // reset
+    setType("");
+    setVehicle("");
+    setTeam("");
+    setDescription("");
+    setAddress("");
+    setImages([]);
+    setSignatureText("");
+    router.back();
+  };
+
+  const formattedDate = date.toLocaleString("pt-BR", {
     day: "2-digit",
     month: "short",
     year: "numeric",
   });
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: "#A1CEDC", dark: "#E5E4E4" }}
-      headerImage={
-        <View style={styles.headerContainer}>
-          <View style={styles.headerRow}>
-            <Image
-              source={require("@/assets/images/lobo-icon.png")}
-              style={styles.reactLogo}
-            />
-            <View style={styles.rightGroup}>
-              <Pressable
-                onPress={() =>
-                  Alert.alert("Notificações", "Sem novas notificações!")
-                }
-                style={styles.bellIcon}
-              >
-                <MaterialIcons
-                  name="notifications-none"
-                  size={26}
-                  color="#6C2020"
-                />
-
-                <View style={styles.notificationBadge}>
-                  <Text style={styles.badgeText}>3</Text>
-                </View>
-              </Pressable>
-              <Image source={{ uri: avatarUrl }} style={styles.avatarUser} />
-            </View>
-          </View>
-
-          {/* Seletor de Data */}
-          <View style={styles.dateRow}>
-            <Pressable
-              onPress={() => setShowDatePicker(true)}
-              style={styles.dateButton}
-            >
-              <Text style={styles.dateText}>{formattedDate}</Text>
-              <MaterialIcons name="calendar-today" size={18} color="#6C2020" />
-            </Pressable>
-          </View>
-
-          {/* Filtros */}
-          <View style={styles.headerExtras}>
-            <Text style={styles.headerText}>Criar nova ocorrência!</Text>
-
-            <View style={styles.filtersRow}>
-              <View style={styles.filterBox}>
-                <Picker
-                  style={styles.picker}
-                  selectedValue={periodFilter}
-                  onValueChange={(itemValue) => setPeriodFilter(itemValue)}
-                >
-                  <Picker.Item
-                    label="Selecione o período"
-                    value=""
-                    enabled={false}
-                    color="#888"
-                  />
-                  <Picker.Item label="Todos" value="todos" />
-                  <Picker.Item label="Hoje" value="hoje" />
-                  <Picker.Item label="Ontem" value="ontem" />
-                  <Picker.Item label="últimos 7 dias" value="ultimos_7_dias" />
-                  <Picker.Item label="Mês passado" value="mes_passado" />
-                </Picker>
-              </View>
-
-              <View style={styles.filterBox}>
-                <Picker
-                  selectedValue={typeFilter}
-                  onValueChange={(itemValue) => setTypeFilter(itemValue)}
-                >
-                  <Picker.Item label="Tipo" value="tipo" />
-                  <Picker.Item label="Todos" value="todos" />
-                  <Picker.Item label="Incêndio" value="incendio" />
-                  <Picker.Item
-                    label="Acidente de Trânsito"
-                    value="acidente_transito"
-                  />
-                  <Picker.Item label="Salvamento" value="salvamento" />
-                  <Picker.Item label="Resgate" value="resgate" />
-                  <Picker.Item label="Vazamento" value="vazamento" />
-                </Picker>
-              </View>
-            </View>
-
-            {/* Segunda linha de filtros */}
-            <View style={styles.filtersRow}>
-              <View style={styles.filterBox}>
-                <Picker
-                  selectedValue={regionFilter}
-                  onValueChange={(itemValue) => setRegionFilter(itemValue)}
-                >
-                  <Picker.Item label="Região" value="regiao" />
-                  <Picker.Item label="Todas" value="todas" />
-                  <Picker.Item label="RMR" value="rmr" />
-                  <Picker.Item label="Agreste" value="agreste" />
-                  <Picker.Item label="Zona da Mata" value="zona_da_mata" />
-                  <Picker.Item label="Sertão" value="sertao" />
-                </Picker>
-              </View>
-
-              <View style={styles.filterBox}>
-                <Picker
-                  selectedValue={statusFilter}
-                  onValueChange={(itemValue) => setStatusFilter(itemValue)}
-                >
-                  <Picker.Item label="Status" value="status" />
-                  <Picker.Item label="Todos" value="todos" />
-                  <Picker.Item label="Pendente" value="pendente" />
-                  <Picker.Item label="Em Andamento" value="media" />
-                  <Picker.Item label="Aberta" value="aberta" />
-                  <Picker.Item label="Cancelado" value="cancelado" />
-                  <Picker.Item label="Concluído" value="concluido" />
-                </Picker>
-              </View>
-            </View>
-
-            <View style={styles.headerButton}>
-              <Button onPress={handleFilters} title="Filtrar" color="#6C2020" />
-            </View>
-          </View>
-
-          {showDatePicker && (
-            <DateTimePicker
-              value={date}
-              mode="date"
-              display="default"
-              onChange={handleDateChange}
-            />
-          )}
-        </View>
-      }
-    >
-      <View style={styles.contentContainer}>
-        <Text>MINHA OCORRÊNCIA 1</Text>
-        <Text>MINHA OCORRÊNCIA 2</Text>
-        <Text>MINHA OCORRÊNCIA 3</Text>
+    <View style={[styles.screen, { paddingBottom: insets.bottom }]}>
+      <View style={styles.pageTitleContainer}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="chevron-back" size={22} color={colors.primary} />
+        </TouchableOpacity>
+        <Text style={styles.pageTitle}>Registro de Ocorrência</Text>
       </View>
-    </ParallaxScrollView>
+
+      <OfflineBanner visible={!isConnected} />
+
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={{
+          padding: 16,
+          paddingBottom: insets.bottom + 80,
+        }}
+      >
+        <View style={styles.card}>
+          <PickerField
+            label="Tipo"
+            value={type}
+            onChange={setType}
+            required
+            items={[
+              { label: "Selecione o tipo", value: "" },
+              { label: "Incêndio", value: "fire" },
+              { label: "Acidente de Trânsito", value: "traffic_accident" },
+              { label: "Resgate", value: "rescue" },
+            ]}
+          />
+
+          <FormField label="Data/Hora" required>
+            <TouchableOpacity
+              style={styles.textBox}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Text style={styles.textBoxText}>{formattedDate}</Text>
+            </TouchableOpacity>
+            {showDatePicker && (
+              <DateTimePicker
+                value={date}
+                mode="date"
+                display="default"
+                onChange={(_, d) => {
+                  setShowDatePicker(false);
+                  if (d) setDate(d);
+                }}
+              />
+            )}
+          </FormField>
+
+          <FormField label="Localização">
+            <LocationButton
+              onPress={() => {
+                if (gps)
+                  setAddress(
+                    `Lat: ${gps.lat.toFixed(5)}, Lon: ${gps.lon.toFixed(
+                      5
+                    )} (acc ${gps.accuracy?.toFixed(1)}m)`
+                  );
+                else Alert.alert("GPS", "Coordenadas não disponíveis.");
+              }}
+            />
+            <TextInput
+              placeholder="Endereço (opcional)"
+              style={[styles.input, { marginTop: 8 }]}
+              value={address}
+              onChangeText={setAddress}
+            />
+          </FormField>
+
+          <FormField label="Descrição" required>
+            <TextInput
+              placeholder="Descreva a ocorrência..."
+              style={[styles.input, styles.textArea]}
+              value={description}
+              onChangeText={setDescription}
+              multiline
+            />
+          </FormField>
+
+          <View style={styles.row}>
+            <View style={{ flex: 1, marginRight: 8 }}>
+              <PickerField
+                label="Viatura"
+                value={vehicle}
+                onChange={setVehicle}
+                required
+                items={[
+                  { label: "Selecione a viatura", value: "" },
+                  { label: "VTR 01", value: "vtr_01" },
+                  { label: "VTR 02", value: "vtr_02" },
+                ]}
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <PickerField
+                label="Equipe"
+                value={team}
+                onChange={setTeam}
+                required
+                items={[
+                  { label: "Selecione a equipe", value: "" },
+                  { label: "Equipe Alpha", value: "alpha" },
+                  { label: "Equipe Bravo", value: "bravo" },
+                ]}
+              />
+            </View>
+          </View>
+
+          <FormField label="Assinatura">
+            <TouchableOpacity
+              style={styles.signatureBox}
+              onPress={() => setShowSignatureModal(true)}
+            >
+              <Text style={styles.signatureText}>
+                {signatureText ? "Assinatura capturada" : "Toque para assinar"}
+              </Text>
+            </TouchableOpacity>
+          </FormField>
+
+          {showSignatureModal && (
+            <Modal visible animationType="slide">
+              <View style={{ flex: 1 }}>
+                <TouchableOpacity
+                  onPress={() => setShowSignatureModal(false)}
+                  style={{ padding: 12 }}
+                >
+                  <Text style={{ color: "red", fontSize: 16 }}>Fechar</Text>
+                </TouchableOpacity>
+
+                <SignaturePad
+                  onOK={(sig) => {
+                    setSignatureText(sig);
+                    setShowSignatureModal(false);
+                  }}
+                  onClose={() => setShowSignatureModal(false)}
+                />
+              </View>
+            </Modal>
+          )}
+
+          <View style={styles.actionsRow}>
+            <ActionButton
+              icon="camera-outline"
+              label="Anexar Imagem"
+              onPress={() => onPickImage(false)}
+            />
+          </View>
+
+          <ImagePreviewList images={images} onRemove={removeImage} />
+        </View>
+
+        <SubmitButton loading={syncing} onPress={handleSubmit} />
+      </ScrollView>
+    </View>
   );
 }
 
-export const styles = StyleSheet.create({
-  contentContainer: {
-    color: "#dbdbdb",
-    alignItems: "center",
-  },
-  headerContainer: {
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingTop: 40,
-    paddingBottom: 20,
-  },
-
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    width: "90%",
-    marginBottom: 16,
-  },
-
-  dateContainer: {
-    width: "90%",
-    alignItems: "flex-start",
-    marginBottom: 8,
-  },
-  dateButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "#fff",
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    elevation: 2,
-  },
-  dateText: {
-    fontSize: 14,
-    color: "#6C2020",
-    fontWeight: "500",
-  },
-
-  dateRow: {
-    width: "90%",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-
-  rightGroup: {
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.lightBackground },
+  pageTitleContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
     flexDirection: "row",
     alignItems: "center",
   },
-
-  bellIcon: {
-    position: "relative",
-    backgroundColor: "#fff",
-    padding: 6,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    elevation: 2,
-    marginRight: 10,
-  },
-
-  notificationBadge: {
-    position: "absolute",
-    top: -4,
-    right: -4,
-    backgroundColor: "#E53935",
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  badgeText: {
-    color: "#fff",
-    fontSize: 10,
-    fontWeight: "bold",
-  },
-
-  headerExtras: {
-    alignItems: "center",
-    width: "90%",
-  },
-
-  headerText: {
-    color: "#6C2020",
-    fontSize: 24,
-    marginBottom: 8,
-    fontWeight: "bold",
-  },
-
-  headerImages: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 24,
-    paddingTop: 50,
-    alignItems: "center",
-  },
-
-  reactLogo: {
-    width: 80,
-    height: 80,
-  },
-  avatarUser: {
-    width: 60,
-    height: 60,
-    borderRadius: 50,
-  },
-
-  headerButton: {
-    borderRadius: 8,
-    overflow: "hidden",
-    marginTop: 8,
-    width: "100%",
-  },
-
-  filtersRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-    marginBottom: 8,
-  },
-
-  filterBox: {
-    flex: 1,
-    marginHorizontal: 5,
-    borderWidth: 1,
-    borderColor: "#bbb",
-    borderRadius: 10,
-    backgroundColor: "#fff",
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 3,
-    height: 38,
-    justifyContent: "center",
-  },
-  picker: { height: 38, fontSize: 12 },
+  backBtn: { padding: 6, marginRight: 8 },
+  pageTitle: { fontSize: 20, fontWeight: "700", color: colors.primary },
+  scroll: { flex: 1 },
   card: {
     backgroundColor: "#fff",
-    borderRadius: 14,
-    padding: 16,
-    marginVertical: 8,
-    width: "90%",
-    alignSelf: "center",
+    borderRadius: 12,
+    padding: 12,
     shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8,
+    elevation: 4,
+    marginBottom: 16,
   },
-  cardId: {
-    color: "#687076",
-    fontSize: 13,
-    marginBottom: 4,
+  textBox: {
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#EEE",
+    borderRadius: 10,
+    backgroundColor: "#fff",
   },
-  cardTitle: {
-    color: "#651717",
-    fontWeight: "600",
-    fontSize: 17,
-    marginBottom: 2,
+  textBoxText: { color: "#333" },
+  input: {
+    borderRadius: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#EEE",
+    backgroundColor: "#fff",
   },
-  cardLocal: {
-    color: "#555",
-    fontSize: 14,
-    marginBottom: 2,
+  textArea: { minHeight: 120 },
+  row: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
+  actionsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 8,
   },
-  cardDate: {
-    color: "#555",
-    fontSize: 13,
+  imagePreview: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+    overflow: "hidden",
+    marginRight: 8,
+    marginTop: 8,
+    position: "relative",
   },
-  cardDetails: {
+  imageThumb: { width: "100%", height: "100%" },
+  removeBadge: {
     position: "absolute",
-    right: 0,
-    bottom: 0,
-    color: "#687076",
-    fontSize: 14,
+    top: -8,
+    right: -8,
+    backgroundColor: "#E53935",
+    borderRadius: 16,
+    padding: 2,
   },
-  cardButton: {
-    position: "absolute",
-    right: 16,
-    bottom: 12,
+  signatureBox: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f9f9f9",
+    marginTop: 8,
+  },
+
+  signatureText: {
+    fontSize: 16,
+    color: "#555",
+  },
+  pickerText: {
+    fontSize: 16,
+    color: "#333",
+    flexShrink: 1,
+    minWidth: 0,
   },
 });

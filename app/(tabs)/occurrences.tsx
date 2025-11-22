@@ -254,12 +254,12 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "#fff",
+    backgroundColor: "#E5E4E4",
     paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: "#E5E4E4",
     elevation: 2,
   },
   dateText: {
@@ -283,11 +283,11 @@ export const styles = StyleSheet.create({
 
   bellIcon: {
     position: "relative",
-    backgroundColor: "#fff",
+    backgroundColor: "#E5E4E4",
     padding: 6,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: "#E5E4E4",
     elevation: 2,
     marginRight: 10,
   },

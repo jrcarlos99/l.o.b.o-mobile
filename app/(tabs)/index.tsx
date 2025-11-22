@@ -1,8 +1,10 @@
+import { TotalLineChart } from "@/components/charts";
 import ParallaxScrollView from "@/components/parallax-scroll-view";
 import { MaterialIcons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
 import { Image } from "expo-image";
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
   Alert,
@@ -16,30 +18,29 @@ import {
 
 const avatarUrl = "https://github.com/jrcarlos99.png";
 
-const handleFilters = () => {
-  console.log("Filters button pressed");
-  Alert.alert("Filtros exibidos");
-};
-
 export default function Index() {
   const [periodFilter, setPeriodFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("tipo");
   const [regionFilter, setRegionFilter] = useState("regiao");
   const [statusFilter, setStatusFilter] = useState("status");
-
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-
-  const handleDateChange = (_: any, selectedDate?: Date) => {
-    setShowDatePicker(Platform.OS === "ios");
-    if (selectedDate) setDate(selectedDate);
-  };
+  const router = useRouter();
 
   const formattedDate = date.toLocaleDateString("pt-BR", {
     day: "2-digit",
     month: "short",
     year: "numeric",
   });
+
+  const handleDateChange = (_: any, selectedDate?: Date) => {
+    setShowDatePicker(Platform.OS === "ios");
+    if (selectedDate) setDate(selectedDate);
+  };
+
+  const handleFilters = () => {
+    Alert.alert("Filtros exibidos");
+  };
 
   return (
     <ParallaxScrollView
@@ -63,7 +64,6 @@ export default function Index() {
                   size={26}
                   color="#6C2020"
                 />
-
                 <View style={styles.notificationBadge}>
                   <Text style={styles.badgeText}>3</Text>
                 </View>
@@ -72,7 +72,6 @@ export default function Index() {
             </View>
           </View>
 
-          {/* Seletor de Data */}
           <View style={styles.dateRow}>
             <Pressable
               onPress={() => setShowDatePicker(true)}
@@ -83,7 +82,6 @@ export default function Index() {
             </Pressable>
           </View>
 
-          {/* Filtros */}
           <View style={styles.headerExtras}>
             <Text style={styles.headerText}>Estatísticas</Text>
 
@@ -92,7 +90,7 @@ export default function Index() {
                 <Picker
                   style={styles.picker}
                   selectedValue={periodFilter}
-                  onValueChange={(itemValue) => setPeriodFilter(itemValue)}
+                  onValueChange={setPeriodFilter}
                 >
                   <Picker.Item
                     label="Selecione o período"
@@ -111,7 +109,7 @@ export default function Index() {
               <View style={styles.filterBox}>
                 <Picker
                   selectedValue={typeFilter}
-                  onValueChange={(itemValue) => setTypeFilter(itemValue)}
+                  onValueChange={setTypeFilter}
                 >
                   <Picker.Item label="Tipo" value="tipo" />
                   <Picker.Item label="Todos" value="todos" />
@@ -127,12 +125,11 @@ export default function Index() {
               </View>
             </View>
 
-            {/* Segunda linha de filtros */}
             <View style={styles.filtersRow}>
               <View style={styles.filterBox}>
                 <Picker
                   selectedValue={regionFilter}
-                  onValueChange={(itemValue) => setRegionFilter(itemValue)}
+                  onValueChange={setRegionFilter}
                 >
                   <Picker.Item label="Região" value="regiao" />
                   <Picker.Item label="Todas" value="todas" />
@@ -146,7 +143,7 @@ export default function Index() {
               <View style={styles.filterBox}>
                 <Picker
                   selectedValue={statusFilter}
-                  onValueChange={(itemValue) => setStatusFilter(itemValue)}
+                  onValueChange={setStatusFilter}
                 >
                   <Picker.Item label="Status" value="status" />
                   <Picker.Item label="Todos" value="todos" />
@@ -175,10 +172,19 @@ export default function Index() {
         </View>
       }
     >
-      <View style={styles.contentContainer}>
-        <Text>GRÁFICO 1</Text>
-        <Text>GRÁFICO 2</Text>
-        <Text>GRÁFICO 3</Text>
+      <View style={styles.chartsContainer}>
+        <View style={{ width: "100%", marginTop: 16 }}>
+          <Text style={styles.cardTitle}>Total de Ocorrências</Text>
+          <TotalLineChart />
+        </View>
+        <Button
+          title="Ver mais estatísticas"
+          onPress={() => router.push("/dashboard")}
+          color="#6C2020"
+        />
+        <View style={{ width: "100%", marginTop: 16 }}>
+          <Text style={styles.cardTitle}>MAPA</Text>
+        </View>
       </View>
     </ParallaxScrollView>
   );
@@ -186,9 +192,22 @@ export default function Index() {
 
 export const styles = StyleSheet.create({
   contentContainer: {
+    flex: 1,
+    paddingBottom: 90,
     color: "#dbdbdb",
     alignItems: "center",
   },
+
+  chartsContainer: {
+    flexWrap: "wrap",
+    flexDirection: "row",
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    minHeight: 250,
+  },
+
   headerContainer: {
     flexDirection: "column",
     alignItems: "center",
@@ -214,12 +233,12 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "#fff",
+    backgroundColor: "#E5E4E4",
     paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: "#E5E4E4",
     elevation: 2,
   },
   dateText: {
@@ -243,11 +262,11 @@ export const styles = StyleSheet.create({
 
   bellIcon: {
     position: "relative",
-    backgroundColor: "#fff",
+    backgroundColor: "#E5E4E4",
     padding: 6,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: "#E5E4E4",
     elevation: 2,
     marginRight: 10,
   },

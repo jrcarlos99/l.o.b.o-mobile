@@ -7,37 +7,46 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
 } from "react-native-reanimated";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+const CUSTOM_TAB_BAR_HEIGHT = 75;
+const CUSTOM_TAB_BAR_BOTTOM_SPACING = 10;
+const TOTAL_TAB_BAR_SPACE =
+  CUSTOM_TAB_BAR_HEIGHT + CUSTOM_TAB_BAR_BOTTOM_SPACING;
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
 
+  const customBottomPadding = insets.bottom + TOTAL_TAB_BAR_SPACE;
+
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <Tabs
-        screenOptions={{
+    <Tabs
+      {...({
+        screenOptions: {
           headerShown: false,
-        }}
-        tabBar={(props) => (
+        },
+        sceneContainerStyle: {
+          paddingBottom: customBottomPadding,
+        },
+        tabBar: (props: any) => (
           <CustomTabBar {...props} bottomInset={insets.bottom} />
-        )}
-      >
-        <Tabs.Screen name="index" options={{ title: "Início" }} />
-        <Tabs.Screen name="occurrences" options={{ title: "Ocorrências" }} />
-        <Tabs.Screen name="create" options={{ title: "Criar Ocorrência" }} />
-        <Tabs.Screen name="reports" options={{ title: "Relatórios" }} />
-        <Tabs.Screen name="settings" options={{ title: "Configurações" }} />
-      </Tabs>
-    </SafeAreaView>
+        ),
+      } as any)}
+    >
+      <Tabs.Screen name="index" options={{ title: "Início" }} />
+      <Tabs.Screen name="occurrences" options={{ title: "Ocorrências" }} />
+      <Tabs.Screen name="create" options={{ title: "Criar Ocorrência" }} />
+      <Tabs.Screen name="reports" options={{ title: "Relatórios" }} />
+      <Tabs.Screen name="settings" options={{ title: "Configurações" }} />
+    </Tabs>
   );
 }
 
 function CustomTabBar({ state, descriptors, navigation, bottomInset }: any) {
+  const bottomStyle = bottomInset + CUSTOM_TAB_BAR_BOTTOM_SPACING;
+
   return (
-    <View style={[styles.tabBar, { bottom: bottomInset + 10 }]}>
+    <View style={[styles.tabBar, { bottom: bottomStyle }]}>
       {state.routes.map((route: any, index: number) => {
         const { options } = descriptors[route.key];
         const label = options.title || route.name;
@@ -146,7 +155,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 20,
     right: 20,
-    bottom: 10,
     backgroundColor: "#FFF",
     borderRadius: 30,
     shadowColor: "#000",
@@ -154,7 +162,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 10,
     elevation: 8,
-    height: 75,
+    height: CUSTOM_TAB_BAR_HEIGHT,
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",

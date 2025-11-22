@@ -78,11 +78,13 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 40,
     borderBottomRightRadius: 40,
     elevation: 15,
+    marginBottom: 20,
   },
   content: {
     flex: 1,
     padding: 32,
     gap: 16,
     overflow: "hidden",
+    paddingTop: 40,
   },
 });
