@@ -6,6 +6,8 @@ import {
 import { useState } from "react";
 import { Alert, StyleSheet } from "react-native";
 
+// const avatarUrl = "https://github.com/jrcarlos99.png";
+
 const mockOccurrences = [
   {
     id: "#08421",
