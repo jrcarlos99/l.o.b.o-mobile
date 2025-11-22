@@ -1,58 +1,19 @@
-import LayoutWrapper from "@/components/LayoutWrapper";
-import {
-  OccurrencesHeader,
-  OccurrencesList,
-} from "@/components/occurrence/occurrences";
-import { useState } from "react";
-import { Alert, StyleSheet } from "react-native";
-
-const mockOccurrences = [
-  {
-    id: "#08421",
-    tipo: "Incêndio Residencial",
-    local: "Boa Viagem - Recife, PE",
-    dataHora: "03/09/2025 - 14:33",
-  },
-  {
-    id: "#08422",
-    tipo: "Acidente Veicular",
-    local: "BR-101 - Jaboatão dos Guararapes, PE",
-    dataHora: "05/09/2025 - 09:12",
-  },
-  {
-    id: "#08423",
-    tipo: "Resgate em Altura",
-    local: "Centro - Caruaru, PE",
-    dataHora: "06/09/2025 - 18:47",
-  },
-  {
-    id: "#08424",
-    tipo: "Vazamento de Gás",
-    local: "Casa Amarela - Recife, PE",
-    dataHora: "07/09/2025 - 11:25",
-  },
-];
-
-export default function OccurrencesPage() {
-  const [avatarUrl] = useState("https://github.com/jrcarlos99.png");
-
-  const handleFilters = () => {
-    Alert.alert("Filtros", "Filtros aplicados!");
-  };
-
-  return (
-    <LayoutWrapper>
-      <OccurrencesHeader avatarUrl={avatarUrl} onFilterPress={handleFilters} />
-
-      <OccurrencesList data={mockOccurrences} />
-    </LayoutWrapper>
-  );
-}
+import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
   contentContainer: {
-    color: "#dbdbdb",
+    flex: 1,
+    paddingBottom: 90,
     alignItems: "center",
+  },
+  chartsContainer: {
+    flexWrap: "wrap",
+    flexDirection: "row",
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    minHeight: 250,
   },
   headerContainer: {
     flexDirection: "column",
