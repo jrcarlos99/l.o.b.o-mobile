@@ -25,7 +25,7 @@ function groupByMonth(occurrences: Occurrence[]) {
   return Object.entries(groups).map(([title, data]) => ({ title, data }));
 }
 
-export default function OccurrencesList({ data }: { data: Occurrence[] }) {
+export function OccurrencesList({ data, headerOffset }: any) {
   const grouped = groupByMonth(data);
 
   return (
@@ -36,7 +36,10 @@ export default function OccurrencesList({ data }: { data: Occurrence[] }) {
         <Text style={styles.sectionHeader}>{title}</Text>
       )}
       renderItem={({ item }) => <OccurrenceCard data={item} />}
-      contentContainerStyle={{ paddingBottom: 80 }}
+      contentContainerStyle={{
+        paddingTop: headerOffset + 16,
+        paddingBottom: 80,
+      }}
     />
   );
 }

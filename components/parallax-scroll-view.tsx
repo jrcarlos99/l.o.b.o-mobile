@@ -10,6 +10,7 @@ import Animated, {
 import { ThemedView } from "@/components/themed-view";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useThemeColor } from "@/hooks/use-theme-color";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const HEADER_HEIGHT = 380;
 
@@ -23,6 +24,7 @@ export default function ParallaxScrollView({
   headerImage,
   headerBackgroundColor,
 }: Props) {
+  const insets = useSafeAreaInsets();
   const backgroundColor = useThemeColor({}, "background");
   const colorScheme = useColorScheme() ?? "light";
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
@@ -63,7 +65,9 @@ export default function ParallaxScrollView({
       >
         {headerImage}
       </Animated.View>
-      <ThemedView style={styles.content}>{children}</ThemedView>
+      <ThemedView style={[styles.content, { paddingTop: insets.top + 10 }]}>
+        {children}
+      </ThemedView>
     </Animated.ScrollView>
   );
 }
@@ -73,18 +77,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
+    paddingTop: 24,
     height: HEADER_HEIGHT,
     overflow: "hidden",
     borderBottomLeftRadius: 40,
     borderBottomRightRadius: 40,
-    elevation: 15,
-    marginBottom: 20,
   },
   content: {
     flex: 1,
     padding: 32,
     gap: 16,
     overflow: "hidden",
-    paddingTop: 40,
+    backgroundColor: "#F9F7F7",
   },
 });

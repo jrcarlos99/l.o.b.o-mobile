@@ -2,12 +2,14 @@ import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
   headerContainer: {
-    flex: 1,
     backgroundColor: "#E5E4E4",
-    paddingTop: 40,
     paddingBottom: 25,
     paddingHorizontal: 16,
     justifyContent: "flex-start",
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40,
+    elevation: 15,
+    marginBottom: 20,
   },
 
   headerRow: {

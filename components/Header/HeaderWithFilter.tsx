@@ -2,6 +2,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
 import { useState } from "react";
 import { Alert, Platform, Pressable, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import HeaderBase from "./HeaderBase";
 import { styles } from "./style";
 
@@ -34,8 +35,10 @@ export default function HeaderWithFilters({
     if (selectedDate) setDate(selectedDate);
   };
 
+  const insets = useSafeAreaInsets();
+
   return (
-    <View style={styles.headerContainer}>
+    <View style={[styles.headerContainer, { paddingTop: insets.top }]}>
       <HeaderBase
         avatarUrl={avatarUrl}
         formattedDate={formattedDate}

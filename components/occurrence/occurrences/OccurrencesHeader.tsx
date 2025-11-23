@@ -170,11 +170,15 @@ export default function OccurrencesHeader({ avatarUrl, onFilterPress }: Props) {
 
 const styles = StyleSheet.create({
   headerContainer: {
+    width: "100%",
+    backgroundColor: "#E5E4E4",
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    paddingTop: 40,
-    paddingBottom: 20,
+    paddingBottom: 25,
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40,
+    elevation: 15,
   },
 
   headerRow: {
