@@ -1,4 +1,5 @@
 import HeaderSimple from "@/components/Header/HeaderSimple";
+import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -7,19 +8,45 @@ const avatarUrl = "https://github.com/jrcarlos99.png";
 
 // Dados dos tipos de relatórios
 const reportTypes = [
-  { id: 1, title: "Atendimento Básico" },
-  { id: 2, title: "Folha de Histórico" },
-  { id: 3, title: "Pré-Hospitalar" },
-  { id: 4, title: "Incêndio" },
-  { id: 5, title: "Salvamento" },
-  { id: 6, title: "Mergulho" },
-  { id: 7, title: "Produtos Perigosos" },
-  { id: 8, title: "Prevenção" },
-  { id: 9, title: "Atividade Comunitária" },
+  {
+    id: 1,
+    title: "Atendimento Básico",
+    color: "#00968A",
+    route: "forms/basico",
+  },
+  {
+    id: 2,
+    title: "Folha de Histórico",
+    color: "#A29F90",
+    route: "forms/historico",
+  },
+  {
+    id: 3,
+    title: "Pré-Hospitalar",
+    color: "#00968A",
+    route: "forms/prehospitalar",
+  },
+  { id: 4, title: "Incêndio", color: "#951B2A", route: "forms/incendio" },
+  { id: 5, title: "Salvamento", color: "#FE9900", route: "forms/salvamento" },
+  { id: 6, title: "Mergulho", color: "#FE9900", route: "forms/mergulho" },
+  {
+    id: 7,
+    title: "Produtos Perigosos",
+    color: "#FFB901",
+    route: "forms/produtos-perigosos",
+  },
+  { id: 8, title: "Prevenção", color: "#6AC66F", route: "forms/prevencao" },
+  {
+    id: 9,
+    title: "Atividade Comunitária",
+    color: "#C4953B",
+    route: "forms/atividade-comunitaria",
+  },
 ];
 
 export default function ReportsScreen() {
   const [formattedDate, setFormattedDate] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     // Formatar data atual
@@ -38,8 +65,9 @@ export default function ReportsScreen() {
     console.log("Notifications pressed");
   };
 
-  const handleReportTypePress = (reportType: string) => {
-    console.log(`Selected: ${reportType}`);
+  const handleReportTypePress = (route: string) => {
+    // @ts-ignore
+    router.push(route as any);
   };
 
   return (
@@ -68,9 +96,10 @@ export default function ReportsScreen() {
                 key={item.id}
                 style={[
                   styles.gridItem,
+                  { backgroundColor: item.color },
                   index === reportTypes.length - 1 && styles.fullWidthItem,
                 ]}
-                onPress={() => handleReportTypePress(item.title)}
+                onPress={() => handleReportTypePress(item.route)}
               >
                 <Text style={styles.gridText}>{item.title}</Text>
               </Pressable>
@@ -111,7 +140,6 @@ const styles = StyleSheet.create({
   },
   gridItem: {
     width: "48%",
-    backgroundColor: "#951B2A",
     padding: 16,
     marginBottom: 15,
     borderRadius: 10,

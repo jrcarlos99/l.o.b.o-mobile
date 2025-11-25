@@ -40,13 +40,6 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "#E5E4E4",
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#E5E4E4",
-    elevation: 2,
   },
   dateText: {
     fontSize: 14,
