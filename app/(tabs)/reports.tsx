@@ -1,223 +1,139 @@
-import HeaderWithFilters from "@/components/Header/HeaderWithFilter";
-import ParallaxScrollView from "@/components/parallax-scroll-view";
-import { Alert, StyleSheet, Text, View } from "react-native";
+import HeaderSimple from "@/components/Header/HeaderSimple";
+import { useEffect, useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const avatarUrl = "https://github.com/jrcarlos99.png";
 
-const handleFilters = () => {
-  console.log("Filters button pressed");
-  Alert.alert("Filtros exibidos");
-};
+// Dados dos tipos de relatórios
+const reportTypes = [
+  { id: 1, title: "Atendimento Básico" },
+  { id: 2, title: "Folha de Histórico" },
+  { id: 3, title: "Pré-Hospitalar" },
+  { id: 4, title: "Incêndio" },
+  { id: 5, title: "Salvamento" },
+  { id: 6, title: "Mergulho" },
+  { id: 7, title: "Produtos Perigosos" },
+  { id: 8, title: "Prevenção" },
+  { id: 9, title: "Atividade Comunitária" },
+];
 
-export default function Index() {
+export default function ReportsScreen() {
+  const [formattedDate, setFormattedDate] = useState("");
+
+  useEffect(() => {
+    // Formatar data atual
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, "0");
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const year = today.getFullYear();
+    setFormattedDate(`${day}/${month}/${year}`);
+  }, []);
+
+  const handleDatePress = () => {
+    console.log("Date pressed");
+  };
+
+  const handleNotificationsPress = () => {
+    console.log("Notifications pressed");
+  };
+
+  const handleReportTypePress = (reportType: string) => {
+    console.log(`Selected: ${reportType}`);
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: "#A1CEDC", dark: "#E5E4E4" }}
-      headerImage={
-        <HeaderWithFilters
-          avatarUrl={avatarUrl}
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <HeaderSimple
           title="Relatórios"
-          onFilterPress={handleFilters}
+          avatarUrl={avatarUrl}
+          formattedDate={formattedDate}
+          onDatePress={handleDatePress}
+          onNotificationsPress={handleNotificationsPress}
         />
-      }
-    >
-      <View style={styles.contentContainer}>
-        <Text>RELATÓRIO 1</Text>
-        <Text>RELATÓRIO 2</Text>
-        <Text>RELATÓRIO 3</Text>
+
+        <ScrollView
+          style={styles.scrollContainer}
+          contentContainerStyle={styles.contentContainer}
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={styles.subtitle}>
+            Selecione o tipo de formulário que deseja preencher:
+          </Text>
+
+          <View style={styles.grid}>
+            {reportTypes.map((item, index) => (
+              <Pressable
+                key={item.id}
+                style={[
+                  styles.gridItem,
+                  index === reportTypes.length - 1 && styles.fullWidthItem,
+                ]}
+                onPress={() => handleReportTypePress(item.title)}
+              >
+                <Text style={styles.gridText}>{item.title}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </ScrollView>
       </View>
-    </ParallaxScrollView>
+    </SafeAreaView>
   );
 }
 
-export const styles = StyleSheet.create({
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#E3E2DD",
+  },
+  container: {
+    flex: 1,
+  },
+  scrollContainer: {
+    flex: 1,
+  },
   contentContainer: {
-    color: "#dbdbdb",
-    alignItems: "center",
+    padding: 20,
+    paddingTop: 10,
   },
-  headerContainer: {
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingTop: 40,
-    paddingBottom: 20,
-  },
-
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    width: "90%",
-    marginBottom: 16,
-  },
-
-  dateContainer: {
-    width: "90%",
-    alignItems: "flex-start",
-    marginBottom: 8,
-  },
-  dateButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "#E5E4E4",
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#E5E4E4",
-    elevation: 2,
-  },
-  dateText: {
-    fontSize: 14,
-    color: "#6C2020",
+  subtitle: {
+    fontSize: 16,
+    marginBottom: 24,
+    textAlign: "center",
+    color: "#333",
     fontWeight: "500",
   },
-
-  dateRow: {
-    width: "90%",
+  grid: {
     flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
   },
-
-  rightGroup: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
-  bellIcon: {
-    position: "relative",
-    backgroundColor: "#E5E4E4",
-    padding: 6,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#E5E4E4",
-    elevation: 2,
-    marginRight: 10,
-  },
-
-  notificationBadge: {
-    position: "absolute",
-    top: -4,
-    right: -4,
-    backgroundColor: "#E53935",
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  badgeText: {
-    color: "#fff",
-    fontSize: 10,
-    fontWeight: "bold",
-  },
-
-  headerExtras: {
-    alignItems: "center",
-    width: "90%",
-  },
-
-  headerText: {
-    color: "#6C2020",
-    fontSize: 24,
-    marginBottom: 8,
-    fontWeight: "bold",
-  },
-
-  headerImages: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 24,
-    paddingTop: 50,
-    alignItems: "center",
-  },
-
-  reactLogo: {
-    width: 80,
-    height: 80,
-  },
-  avatarUser: {
-    width: 60,
-    height: 60,
-    borderRadius: 50,
-  },
-
-  headerButton: {
-    borderRadius: 8,
-    overflow: "hidden",
-    marginTop: 8,
-    width: "100%",
-  },
-
-  filtersRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-    marginBottom: 8,
-  },
-
-  filterBox: {
-    flex: 1,
-    marginHorizontal: 5,
-    borderWidth: 1,
-    borderColor: "#bbb",
-    borderRadius: 10,
-    backgroundColor: "#fff",
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 3,
-    height: 38,
-    justifyContent: "center",
-  },
-  picker: { height: 38, fontSize: 12 },
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 14,
+  gridItem: {
+    width: "48%",
+    backgroundColor: "#951B2A",
     padding: 16,
-    marginVertical: 8,
-    width: "90%",
-    alignSelf: "center",
+    marginBottom: 15,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 70,
     shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 3,
     elevation: 3,
   },
-  cardId: {
-    color: "#687076",
-    fontSize: 13,
-    marginBottom: 4,
+  fullWidthItem: {
+    width: "100%",
   },
-  cardTitle: {
-    color: "#651717",
+  gridText: {
+    color: "#FFF",
+    fontSize: 14,
     fontWeight: "600",
-    fontSize: 17,
-    marginBottom: 2,
-  },
-  cardLocal: {
-    color: "#555",
-    fontSize: 14,
-    marginBottom: 2,
-  },
-  cardDate: {
-    color: "#555",
-    fontSize: 13,
-  },
-  cardDetails: {
-    position: "absolute",
-    right: 0,
-    bottom: 0,
-    color: "#687076",
-    fontSize: 14,
-  },
-  cardButton: {
-    position: "absolute",
-    right: 16,
-    bottom: 12,
+    textAlign: "center",
   },
 });

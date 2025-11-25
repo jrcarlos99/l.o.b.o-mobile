@@ -1,6 +1,6 @@
+import { styles } from "@/styles/reportStyle";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Image, Pressable, Text, View } from "react-native";
-import { styles } from "./style";
 
 type Props = {
   avatarUrl: string;
