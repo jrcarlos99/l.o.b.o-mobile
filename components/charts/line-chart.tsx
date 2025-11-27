@@ -3,12 +3,17 @@ import { LineChart } from "react-native-chart-kit";
 
 const screenWidth = Dimensions.get("window").width;
 
-export function TotalLineChart() {
+type Props = {
+  labels: string[];
+  values: number[];
+};
+
+export function TotalLineChart({ labels, values }: Props) {
   const data = {
-    labels: ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"],
+    labels,
     datasets: [
       {
-        data: [80, 100, 120, 140, 150, 160, 163],
+        data: values,
         color: (opacity = 1) => `rgba(107, 27, 27, ${opacity})`,
         strokeWidth: 2,
       },

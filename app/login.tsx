@@ -1,6 +1,9 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   Dimensions,
   Image,
   ImageBackground,
@@ -13,6 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AuthInput from "../components/AuthInput";
 import PrimaryButton from "../components/PrimaryButton";
 import { colors } from "../constants/colors";
+import { login } from "../services/auth"; // serviço que chama POST /auth/login
 
 const { height } = Dimensions.get("window");
 
@@ -23,6 +27,22 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async () => {
+    try {
+      setLoading(true);
+      const token = await login(email, password);
+
+      await AsyncStorage.setItem("token", token);
+
+      router.push("/(tabs)/occurrences");
+    } catch (error) {
+      Alert.alert("Erro", "Email ou senha inválidos.", error as any);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -37,7 +57,6 @@ export default function Login() {
             source={require("../assets/images/lobo-icon.png")}
             style={styles.logo}
           />
-
           <Text style={styles.headerTitle}>Entre na sua{"\n"}conta</Text>
         </View>
       </ImageBackground>
@@ -79,10 +98,15 @@ export default function Login() {
         </View>
 
         <PrimaryButton
-          title="Entrar"
-          onPress={() => router.push("/(tabs)/occurrences")}
+          title={loading ? "Entrando..." : "Entrar"}
+          onPress={handleLogin}
           style={{ marginTop: 20 }}
+          disabled={loading}
         />
+
+        {loading && (
+          <ActivityIndicator color={colors.primary} style={{ marginTop: 10 }} />
+        )}
 
         <View style={styles.orRow}>
           <View style={styles.line} />
@@ -106,35 +130,19 @@ export default function Login() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.lightBackground },
-
-  header: {
-    height: height * 0.45,
-    justifyContent: "flex-end",
-  },
-
+  header: { height: height * 0.45, justifyContent: "flex-end" },
   headerImage: {
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
   },
-
-  headerContent: {
-    paddingHorizontal: 24,
-    paddingBottom: 80,
-  },
-
-  logo: {
-    width: 90,
-    height: 90,
-    marginBottom: 8,
-  },
-
+  headerContent: { paddingHorizontal: 24, paddingBottom: 80 },
+  logo: { width: 90, height: 90, marginBottom: 8 },
   headerTitle: {
     fontSize: 34,
     fontWeight: "800",
     color: "#fff",
     lineHeight: 38,
   },
-
   card: {
     width: "100%",
     flex: 1,
@@ -146,16 +154,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.07,
     shadowRadius: 7,
   },
-
   rowSpace: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginTop: 10,
   },
-
   rememberRow: { flexDirection: "row", alignItems: "center" },
-
   checkbox: {
     width: 18,
     height: 18,
@@ -164,17 +169,11 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     marginRight: 8,
   },
-
   remText: { color: colors.muted },
-
   forgot: { color: colors.primary, fontWeight: "600" },
-
   orRow: { flexDirection: "row", alignItems: "center", marginTop: 20 },
-
   line: { flex: 1, height: 1, backgroundColor: "#E9E6E6" },
-
   orText: { marginHorizontal: 8, color: colors.muted },
-
   faceBox: {
     marginTop: 20,
     alignSelf: "center",
@@ -185,16 +184,11 @@ const styles = StyleSheet.create({
     width: 110,
     alignItems: "center",
   },
-
   terms: {
     fontSize: 12,
     color: colors.muted,
     textAlign: "center",
     marginTop: 18,
   },
-
-  link: {
-    color: colors.primary,
-    fontWeight: "700",
-  },
+  link: { color: colors.primary, fontWeight: "700" },
 });

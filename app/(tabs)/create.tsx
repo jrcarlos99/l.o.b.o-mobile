@@ -1,9 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import NetInfo from "@react-native-community/netinfo";
+import { readAsStringAsync } from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Modal,
@@ -24,17 +25,44 @@ import PickerField from "@/components/occurrence/PickerField";
 import SignaturePad from "@/components/occurrence/SignaturePad";
 import SubmitButton from "@/components/occurrence/SubmitButton";
 import useGPS from "@/hooks/useGPS";
+import {
+  createOccurrence,
+  fetchEquipes,
+  fetchViaturas,
+} from "@/services/occurrences";
 import { styles } from "@/styles/createStyles";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+// Backend enums (for reference and payload casting)
+type RegiaoEnum = "AGRE" | "SERT" | "RMR" | "ZDMT";
+type TipoEnum =
+  | "INCENDIO"
+  | "ACIDENTE_DE_TRANSITO"
+  | "SALVAMENTO"
+  | "RESGATE"
+  | "PRE_HOSPITALAR"
+  | "EPI"
+  | "COMUNICACAO"
+  | "VAZAMENTO";
+type StatusEnum =
+  | "EM_ANDAMENTO"
+  | "ABERTA"
+  | "CANCELADO"
+  | "PENDENTE"
+  | "CONCLUIDO";
+
+type PickerItem = { label: string; value: string };
 
 export default function CreateOccurrence() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
-  const [type, setType] = useState("");
+  const [type, setType] = useState<string>("");
+  const [region, setRegion] = useState<string>("");
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [vehicle, setVehicle] = useState("");
-  const [team, setTeam] = useState("");
+  const [vehicle, setVehicle] = useState<string>("");
+  const [team, setTeam] = useState<string>("");
   const [description, setDescription] = useState("");
   const [address, setAddress] = useState("");
   const [images, setImages] = useState<{ uri: string; timestamp: string }[]>(
@@ -44,20 +72,75 @@ export default function CreateOccurrence() {
   const [showSignatureModal, setShowSignatureModal] = useState(false);
   const [isConnected, setIsConnected] = useState<boolean | null>(true);
 
+  // Data for pickers
+  const [viaturaItems, setViaturaItems] = useState<PickerItem[]>([
+    { label: "Selecione a viatura", value: "" },
+  ]);
+  const [equipeItems, setEquipeItems] = useState<PickerItem[]>([
+    { label: "Selecione a equipe", value: "" },
+  ]);
+  const [loadingPickers, setLoadingPickers] = useState(false);
+
   const { gps } = useGPS();
 
   useEffect(() => {
-    const unsub = NetInfo.addEventListener((s) => {
-      setIsConnected(!!s.isConnected);
-    });
+    const unsub = NetInfo.addEventListener((s) =>
+      setIsConnected(!!s.isConnected)
+    );
     return unsub;
   }, []);
 
-  const formattedDate = date.toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+  // Load viaturas/equipes dynamically from backend
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoadingPickers(true);
+        const token = await AsyncStorage.getItem("token");
+        console.log("Token recuperado para pickers:", token);
+        if (!token) throw new Error("Token não encontrado");
+
+        const [viaturas, equipes] = await Promise.all([
+          fetchViaturas(token),
+          fetchEquipes(token),
+        ]);
+
+        console.log("🚨 Viaturas recebidas:", viaturas);
+        console.log("🚨 Equipes recebidas:", equipes);
+
+        const viItems: PickerItem[] = [
+          { label: "Selecione a viatura", value: "" },
+          ...viaturas.map((v: any) => ({
+            label: v.nome ?? `Viatura #${v.id}`,
+            value: String(v.id),
+          })),
+        ];
+        const eqItems: PickerItem[] = [
+          { label: "Selecione a equipe", value: "" },
+          ...equipes.map((e: any) => ({
+            label: e.nome ?? `Equipe #${e.id}`,
+            value: String(e.id),
+          })),
+        ];
+        setViaturaItems(viItems);
+        setEquipeItems(eqItems);
+      } catch (err) {
+        console.warn("Falha ao carregar viaturas/equipes:", err);
+        Alert.alert("Atenção", "Não foi possível carregar viaturas e equipes.");
+      } finally {
+        setLoadingPickers(false);
+      }
+    })();
+  }, []);
+
+  const formattedDate = useMemo(
+    () =>
+      date.toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }),
+    [date]
+  );
 
   const onPickImage = async () => {
     try {
@@ -83,6 +166,7 @@ export default function CreateOccurrence() {
 
   const validate = () => {
     if (!type) return Alert.alert("Campo obrigatório", "Selecione o tipo.");
+    if (!region) return Alert.alert("Campo obrigatório", "Selecione a região.");
     if (!vehicle)
       return Alert.alert("Campo obrigatório", "Selecione a viatura.");
     if (!team) return Alert.alert("Campo obrigatório", "Selecione a equipe.");
@@ -91,24 +175,54 @@ export default function CreateOccurrence() {
     return true;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validate()) return;
 
-    Alert.alert(
-      isConnected ? "Enviado" : "Salvo offline",
-      isConnected
-        ? "Ocorrência enviada com sucesso."
-        : "Sem conexão. A ocorrência foi salva localmente e será enviada quando houver rede."
-    );
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (!token) throw new Error("Token não encontrado");
 
-    setType("");
-    setVehicle("");
-    setTeam("");
-    setDescription("");
-    setAddress("");
-    setImages([]);
-    setSignatureText("");
-    router.back();
+      const anexoBase64: string[] = [];
+      for (const img of images) {
+        const base64 = await readAsStringAsync(img.uri, "base64");
+        anexoBase64.push(`data:image/jpeg;base64, ${base64}`);
+      }
+
+      const occurrenceData = {
+        titulo: "Ocorrência registrada pelo app",
+        descricao: description,
+        solicitante: "Usuário do app",
+        regiao: region as RegiaoEnum, // cast only at payload
+        cidade: address,
+        dataHoraAbertura: date.toISOString(),
+        status: "PENDENTE" as StatusEnum,
+        tipo: type as TipoEnum,
+        latitude: gps?.lat,
+        longitude: gps?.lon,
+        historico: ["ABERTA"],
+        anexos: anexoBase64,
+        viaturaId: Number(vehicle),
+        equipeId: Number(team),
+      };
+
+      const nova = await createOccurrence(token, occurrenceData);
+
+      Alert.alert("Sucesso", "Ocorrência enviada com sucesso.");
+      console.log("Ocorrência criada:", nova);
+
+      setType("");
+      setRegion("");
+      setVehicle("");
+      setTeam("");
+      setDescription("");
+      setAddress("");
+      setImages([]);
+      setSignatureText("");
+      router.back();
+    } catch (error) {
+      Alert.alert("Erro", "Não foi possível criar a ocorrência.");
+      console.error(error);
+    }
   };
 
   return (
@@ -133,19 +247,42 @@ export default function CreateOccurrence() {
         ]}
       >
         <View style={styles.card}>
+          {/* Tipo */}
           <PickerField
             label="Tipo"
             value={type}
-            onChange={setType}
+            onChange={setType} // matches (v: string) => void
             required
             items={[
               { label: "Selecione o tipo", value: "" },
-              { label: "Incêndio", value: "fire" },
-              { label: "Acidente de Trânsito", value: "traffic_accident" },
-              { label: "Resgate", value: "rescue" },
+              { label: "Incêndio", value: "INCENDIO" },
+              { label: "Acidente de Trânsito", value: "ACIDENTE_DE_TRANSITO" },
+              { label: "Resgate", value: "RESGATE" },
+              { label: "Salvamento", value: "SALVAMENTO" },
+              { label: "Comunicação", value: "COMUNICACAO" },
+              { label: "Pré-Hospitalar", value: "PRE_HOSPITALAR" },
+              { label: "EPI", value: "EPI" },
+              { label: "Acidente", value: "ACIDENTE" },
+              { label: "Vazamento", value: "VAZAMENTO" },
             ]}
           />
 
+          {/* Região */}
+          <PickerField
+            label="Região"
+            value={region}
+            onChange={setRegion} // matches (v: string) => void
+            required
+            items={[
+              { label: "Selecione a região", value: "" },
+              { label: "Agreste", value: "AGRE" },
+              { label: "Sertão", value: "SERT" },
+              { label: "Região Metropolitana do Recife", value: "RMR" },
+              { label: "Zona da Mata", value: "ZDMT" },
+            ]}
+          />
+
+          {/* Data/Hora */}
           <FormField label="Data/Hora" required>
             <TouchableOpacity
               style={styles.textBox}
@@ -166,14 +303,15 @@ export default function CreateOccurrence() {
             )}
           </FormField>
 
+          {/* Localização */}
           <FormField label="Localização">
             <LocationButton
               onPress={() => {
                 if (gps)
                   setAddress(
-                    `Lat: ${gps.lat.toFixed(5)}, Lon: ${gps.lon.toFixed(
-                      5
-                    )} (acc ${gps.accuracy?.toFixed(1)}m)`
+                    `Lat: ${gps.lat?.toFixed(5)}, Lon: ${gps.lon?.toFixed(5)}${
+                      gps.accuracy ? ` (acc ${gps.accuracy.toFixed(1)}m)` : ""
+                    }`
                   );
                 else Alert.alert("GPS", "Coordenadas não disponíveis.");
               }}
@@ -186,6 +324,7 @@ export default function CreateOccurrence() {
             />
           </FormField>
 
+          {/* Descrição */}
           <FormField label="Descrição" required>
             <TextInput
               placeholder="Descreva a ocorrência..."
@@ -196,6 +335,7 @@ export default function CreateOccurrence() {
             />
           </FormField>
 
+          {/* Viatura e Equipe */}
           <View style={styles.row}>
             <View style={{ flex: 1, marginRight: 8 }}>
               <PickerField
@@ -203,11 +343,7 @@ export default function CreateOccurrence() {
                 value={vehicle}
                 onChange={setVehicle}
                 required
-                items={[
-                  { label: "Selecione a viatura", value: "" },
-                  { label: "VTR 01", value: "vtr_01" },
-                  { label: "VTR 02", value: "vtr_02" },
-                ]}
+                items={viaturaItems}
               />
             </View>
             <View style={{ flex: 1 }}>
@@ -216,15 +352,12 @@ export default function CreateOccurrence() {
                 value={team}
                 onChange={setTeam}
                 required
-                items={[
-                  { label: "Selecione a equipe", value: "" },
-                  { label: "Equipe Alpha", value: "alpha" },
-                  { label: "Equipe Bravo", value: "bravo" },
-                ]}
+                items={equipeItems}
               />
             </View>
           </View>
 
+          {/* Assinatura */}
           <FormField label="Assinatura">
             <TouchableOpacity
               style={styles.signatureBox}
@@ -256,6 +389,7 @@ export default function CreateOccurrence() {
             </Modal>
           )}
 
+          {/* Imagens */}
           <View style={styles.actionsRow}>
             <ActionButton
               icon="camera-outline"
@@ -267,6 +401,7 @@ export default function CreateOccurrence() {
           <ImagePreviewList images={images} onRemove={removeImage} />
         </View>
 
+        {/* Enviar */}
         <SubmitButton loading={false} onPress={handleSubmit} />
       </ScrollView>
     </View>

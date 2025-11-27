@@ -1,6 +1,7 @@
+import { OccurrenceFilters } from "@/types/OccurrenceFilters";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Alert, Platform, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import HeaderBase from "./HeaderBase";
@@ -10,12 +11,14 @@ type Props = {
   avatarUrl: string;
   title: string;
   onFilterPress: () => void;
+  onFiltersChange: (filters: OccurrenceFilters) => void;
 };
 
 export default function HeaderWithFilters({
   avatarUrl,
   title,
   onFilterPress,
+  onFiltersChange,
 }: Props) {
   const [periodFilter, setPeriodFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("tipo");
@@ -37,6 +40,19 @@ export default function HeaderWithFilters({
 
   const insets = useSafeAreaInsets();
 
+  // Normaliza valores para evitar envio de "todos", "tipo", etc.
+  const normalize = (value: string) =>
+    ["todos", "tipo", "status", "regiao"].includes(value) ? undefined : value;
+
+  // Atualiza os filtros no pai sempre que algo muda
+  useEffect(() => {
+    onFiltersChange({
+      status: normalize(statusFilter),
+      regiao: normalize(regionFilter) as OccurrenceFilters["regiao"],
+      tipo: normalize(typeFilter) as OccurrenceFilters["tipo"],
+    });
+  }, [statusFilter, regionFilter, typeFilter, periodFilter, onFiltersChange]);
+
   return (
     <View style={[styles.headerContainer, { paddingTop: insets.top }]}>
       <HeaderBase
@@ -46,6 +62,7 @@ export default function HeaderWithFilters({
         onNotificationsPress={() =>
           Alert.alert("Notificações", "Sem novas notificações!")
         }
+        onAvatarPress={() => Alert.alert("Avatar", "Menu do usuário")}
       />
 
       <View style={styles.headerExtras}>
@@ -76,14 +93,17 @@ export default function HeaderWithFilters({
             <Picker selectedValue={typeFilter} onValueChange={setTypeFilter}>
               <Picker.Item label="Tipo" value="tipo" />
               <Picker.Item label="Todos" value="todos" />
-              <Picker.Item label="Incêndio" value="incendio" />
+              <Picker.Item label="Incêndio" value="INCENDIO" />
               <Picker.Item
                 label="Acidente de Trânsito"
-                value="acidente_transito"
+                value="ACIDENTE_DE_TRANSITO"
               />
-              <Picker.Item label="Salvamento" value="salvamento" />
-              <Picker.Item label="Resgate" value="resgate" />
-              <Picker.Item label="Vazamento" value="vazamento" />
+              <Picker.Item label="Salvamento" value="SALVAMENTO" />
+              <Picker.Item label="Resgate" value="RESGATE" />
+              <Picker.Item label="Pré-Hospitalar" value="PRE_HOSPITALAR" />
+              <Picker.Item label="EPI" value="EPI" />
+              <Picker.Item label="Comunicação" value="COMUNICACAO" />
+              <Picker.Item label="Vazamento" value="VAZAMENTO" />
             </Picker>
           </View>
         </View>
@@ -95,11 +115,11 @@ export default function HeaderWithFilters({
               onValueChange={setRegionFilter}
             >
               <Picker.Item label="Região" value="regiao" />
-              <Picker.Item label="Todas" value="todas" />
-              <Picker.Item label="RMR" value="rmr" />
-              <Picker.Item label="Agreste" value="agreste" />
-              <Picker.Item label="Zona da Mata" value="zona_da_mata" />
-              <Picker.Item label="Sertão" value="sertao" />
+              <Picker.Item label="Todas" value="todos" />
+              <Picker.Item label="RMR" value="RMR" />
+              <Picker.Item label="Agreste" value="AGRE" />
+              <Picker.Item label="Zona da Mata" value="ZDMT" />
+              <Picker.Item label="Sertão" value="SERT" />
             </Picker>
           </View>
 
@@ -110,11 +130,11 @@ export default function HeaderWithFilters({
             >
               <Picker.Item label="Status" value="status" />
               <Picker.Item label="Todos" value="todos" />
-              <Picker.Item label="Pendente" value="pendente" />
-              <Picker.Item label="Em Andamento" value="media" />
-              <Picker.Item label="Aberta" value="aberta" />
-              <Picker.Item label="Cancelado" value="cancelado" />
-              <Picker.Item label="Concluído" value="concluido" />
+              <Picker.Item label="Pendente" value="PENDENTE" />
+              <Picker.Item label="Em Andamento" value="EM_ANDAMENTO" />
+              <Picker.Item label="Aberta" value="ABERTA" />
+              <Picker.Item label="Cancelado" value="CANCELADO" />
+              <Picker.Item label="Concluído" value="CONCLUIDO" />
             </Picker>
           </View>
         </View>

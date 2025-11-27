@@ -7,6 +7,7 @@ type Props = {
   formattedDate: string;
   onDatePress: () => void;
   onNotificationsPress: () => void;
+  onAvatarPress: () => void;
 };
 
 export default function HeaderBase({
@@ -14,6 +15,7 @@ export default function HeaderBase({
   formattedDate,
   onDatePress,
   onNotificationsPress,
+  onAvatarPress,
 }: Props) {
   return (
     <>
@@ -22,6 +24,7 @@ export default function HeaderBase({
           source={require("@/assets/images/lobo-icon.png")}
           style={styles.reactLogo}
         />
+
         <View style={styles.rightGroup}>
           <Pressable onPress={onNotificationsPress} style={styles.bellIcon}>
             <MaterialIcons
@@ -33,7 +36,11 @@ export default function HeaderBase({
               <Text style={styles.badgeText}>3</Text>
             </View>
           </Pressable>
-          <Image source={{ uri: avatarUrl }} style={styles.avatarUser} />
+
+          {/* Avatar do usuário  */}
+          <Pressable onPress={onAvatarPress}>
+            <Image source={{ uri: avatarUrl }} style={styles.avatarUser} />
+          </Pressable>
         </View>
       </View>
 

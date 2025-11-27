@@ -13,6 +13,7 @@ type Props = {
   onPress?: () => void;
   style?: ViewStyle;
   textStyle?: TextStyle;
+  disabled?: boolean;
 };
 
 export default function PrimaryButton({
