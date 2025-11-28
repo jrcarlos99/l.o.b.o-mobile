@@ -1,22 +1,34 @@
+import CustomMap from "@/components/CustomMap";
+import DashboardCarousel from "@/components/DashboardCarroussel";
 import HeaderWithFilters from "@/components/Header/HeaderWithFilters";
-import { TotalLineChart } from "@/components/charts";
 import ParallaxScrollView from "@/components/parallax-scroll-view";
 import { fetchDashboardStats } from "@/services/dashboard";
+import { fetchOccurrences } from "@/services/occurrences";
 import { OccurrenceFilters } from "@/types/OccurrenceFilters";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Alert, Button, Platform, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { styles } from "../../styles/IndexStyles";
+
+type Occurrence = {
+  id: string;
+  latitude: number;
+  longitude: number;
+  title?: string;
+};
 
 export default function Index() {
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [filters, setFilters] = useState<OccurrenceFilters>({});
-  const [labels, setLabels] = useState<string[]>([]);
-  const [values, setValues] = useState<number[]>([]);
-  const router = useRouter();
+  const [tipoData, setTipoData] = useState<any>(null);
+  const [regiaoData, setRegiaoData] = useState<any>(null);
+  const [turnoData, setTurnoData] = useState<any>(null);
+  const [statusData, setStatusData] = useState<any>(null);
+  const [total, setTotal] = useState<number>(0);
+  const [occurrences, setOccurrences] = useState<Occurrence[]>([]);
 
   const avatarUrl = "https://i.pravatar.cc/150?img=3";
 
@@ -25,64 +37,177 @@ export default function Index() {
     if (selectedDate) setDate(selectedDate);
   };
 
-  const handleFilters = async () => {
+  const handleFilters = useCallback(async () => {
     try {
       const token = await AsyncStorage.getItem("token");
       if (!token) throw new Error("Token não encontrado");
 
+      //  busca estatísticas
       const stats = await fetchDashboardStats(token, filters);
+      processStats(stats);
 
-      const newLabels = Object.keys(stats);
-      const newValues = Object.values(stats).map((v) => Number(v));
+      //  busca ocorrências
+      const occs = await fetchOccurrences(token, filters);
 
-      setLabels(newLabels);
-      setValues(newValues);
+      const mapped = Array.isArray(occs.content)
+        ? occs.content.map((o: any) => ({
+            id: String(o.id),
+            latitude: o.latitude,
+            longitude: o.longitude,
+            title: o.titulo,
+          }))
+        : occs
+        ? [
+            {
+              id: String(occs.id),
+              latitude: occs.latitude,
+              longitude: occs.longitude,
+              title: occs.titulo,
+            },
+          ]
+        : [];
 
-      console.log("Estatísticas filtradas:", stats);
+      setOccurrences(mapped);
     } catch (error) {
-      Alert.alert("Erro", "Não foi possível aplicar os filtros.");
       console.error("Erro ao aplicar filtros:", error);
+      Alert.alert(
+        "Aviso",
+        "Servidor indisponível, não foi possível carregar estatísticas."
+      );
     }
+  }, [filters]);
+
+  const processStats = (stats: any) => {
+    const regiaoColors = [
+      "#F44336",
+      "#2196F3",
+      "#4CAF50",
+      "#FF9800",
+      "#009688",
+    ];
+    const turnoColors = ["#FF9800", "#3F51B5", "#009688"];
+
+    setTotal(stats.totalOcorrencias || 0);
+
+    const tipoLabels = Object.keys(stats.porTipo || {});
+    const tipoValues = Object.values(stats.porTipo || {});
+    setTipoData({
+      labels: tipoLabels,
+      datasets: [{ data: tipoValues }],
+    });
+
+    const statusLabels = Object.keys(stats.porStatus || {});
+    const statusValues = Object.values(stats.porStatus || {});
+    setStatusData({
+      labels: statusLabels,
+      datasets: [{ data: statusValues }],
+    });
+
+    const regiaoDataArray = Object.entries(stats.porRegiao || {}).map(
+      ([name, population], i) => ({
+        name,
+        population,
+        color: regiaoColors[i % regiaoColors.length],
+        legendFontColor: "#333",
+        legendFontSize: 12,
+      })
+    );
+    setRegiaoData(regiaoDataArray);
+
+    const turnoDataArray = Object.entries(stats.porTurno || {}).map(
+      ([name, population], i) => ({
+        name,
+        population,
+        color: turnoColors[i % turnoColors.length],
+        legendFontColor: "#333",
+        legendFontSize: 12,
+      })
+    );
+    setTurnoData(turnoDataArray);
   };
 
+  useEffect(() => {
+    handleFilters();
+  }, [handleFilters]);
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: "#E5E4E4", dark: "#E5E4E4" }}
-      headerImage={
-        <HeaderWithFilters
-          avatarUrl={avatarUrl}
-          title="Estatísticas"
-          onFilterPress={handleFilters}
-          onFiltersChange={setFilters}
-        />
-      }
-    >
-      <View style={styles.contentContainer}>
-        <View style={styles.chartsContainer}>
-          <Text style={styles.cardTitle}>Total de Ocorrências</Text>
-          <TotalLineChart labels={labels} values={values} />
+    <SafeAreaView style={{ flex: 1 }}>
+      <ParallaxScrollView
+        headerBackgroundColor={{ light: "#E5E4E4", dark: "#E5E4E4" }}
+        headerImage={
+          <HeaderWithFilters
+            avatarUrl={avatarUrl}
+            title="Estatísticas"
+            onFiltersChange={setFilters}
+          />
+        }
+      >
+        {tipoData && regiaoData && turnoData && statusData && (
+          <View style={styles.chartsContainer}>
+            <DashboardCarousel
+              tipoData={tipoData}
+              regiaoData={regiaoData}
+              turnoData={turnoData}
+              statusData={statusData}
+              total={total}
+            />
+          </View>
+        )}
+
+        {showDatePicker && (
+          <DateTimePicker
+            value={date}
+            mode="date"
+            display="default"
+            onChange={handleDateChange}
+          />
+        )}
+
+        <View style={styles.mapSection}>
+          <Text style={styles.mapTitle}>MAPA</Text>
+
+          {/* Subtítulo com contagem */}
+          <Text style={styles.mapSubtitle}>
+            Exibindo {occurrences.length} ocorrência
+            {occurrences.length !== 1 ? "s" : ""} filtrada
+            {occurrences.length !== 1 ? "s" : ""}
+          </Text>
+
+          {/* Legenda de cores por status */}
+          <View style={styles.legendContainer}>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: "red" }]} />
+              <Text style={styles.legendLabel}>PENDENTE</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: "orange" }]} />
+              <Text style={styles.legendLabel}>EM ANDAMENTO</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: "green" }]} />
+              <Text style={styles.legendLabel}>CONCLUÍDO</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: "gray" }]} />
+              <Text style={styles.legendLabel}>CANCELADO</Text>
+            </View>
+          </View>
+
+          {/* Botão para limpar filtros */}
+          <View style={styles.clearFiltersContainer}>
+            <Button
+              title="Limpar filtros"
+              onPress={() => {
+                setFilters({});
+                handleFilters();
+              }}
+              color="#6C2020"
+            />
+          </View>
+
+          <CustomMap occurrences={occurrences} />
         </View>
-
-        <Button
-          title="Ver mais estatísticas"
-          onPress={() => router.push("/dashboard")}
-          color="#6C2020"
-        />
-
-        <View style={styles.chartsContainer}>
-          <Text style={styles.cardTitle}>MAPA</Text>
-          {/* Aqui você pode adicionar o mapa ou outro conteúdo */}
-        </View>
-      </View>
-
-      {showDatePicker && (
-        <DateTimePicker
-          value={date}
-          mode="date"
-          display="default"
-          onChange={handleDateChange}
-        />
-      )}
-    </ParallaxScrollView>
+      </ParallaxScrollView>
+    </SafeAreaView>
   );
 }

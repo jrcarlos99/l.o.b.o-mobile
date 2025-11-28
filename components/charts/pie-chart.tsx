@@ -16,7 +16,7 @@ export function CustomPieChart({ data }: { data: PieItem[] }) {
     <PieChart
       data={data}
       width={screenWidth - 32}
-      height={220}
+      height={260} // ✅ aumentei altura para labels não ficarem cortados
       accessor="population"
       backgroundColor="transparent"
       paddingLeft="8"

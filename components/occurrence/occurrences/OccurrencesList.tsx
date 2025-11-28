@@ -1,7 +1,7 @@
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import React from "react";
-import { SectionList, StyleSheet, Text } from "react-native";
+import { ActivityIndicator, SectionList, StyleSheet, Text } from "react-native";
 import OccurrenceCard from "./OccurrenceCard";
 
 type Occurrence = {
@@ -37,7 +37,19 @@ function groupByMonth(occurrences: Occurrence[]) {
   return Object.entries(groups).map(([title, data]) => ({ title, data }));
 }
 
-export function OccurrencesList({ data, headerOffset }: any) {
+export function OccurrencesList({
+  data,
+  headerOffset,
+  onLoadMore,
+  hasMore,
+  loading,
+}: {
+  data: Occurrence[];
+  headerOffset?: number;
+  onLoadMore?: () => void;
+  hasMore?: boolean;
+  loading?: boolean;
+}) {
   const grouped = groupByMonth(data);
 
   return (
@@ -48,8 +60,23 @@ export function OccurrencesList({ data, headerOffset }: any) {
         <Text style={styles.sectionHeader}>{title}</Text>
       )}
       renderItem={({ item }) => <OccurrenceCard data={item} />}
+      onEndReached={() => {
+        if (hasMore && !loading && onLoadMore) {
+          onLoadMore();
+        }
+      }}
+      onEndReachedThreshold={0.5}
+      ListFooterComponent={
+        loading ? (
+          <ActivityIndicator
+            size="small"
+            color="#6C2020"
+            style={{ margin: 16 }}
+          />
+        ) : null
+      }
       contentContainerStyle={{
-        paddingTop: headerOffset + 16,
+        paddingTop: (headerOffset ?? 0) + 16,
         paddingBottom: 80,
       }}
     />

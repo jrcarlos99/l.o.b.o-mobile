@@ -193,4 +193,60 @@ export const styles = StyleSheet.create({
     right: 16,
     bottom: 12,
   },
+  mapSection: {
+    width: "100%",
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+  },
+  mapTitle: {
+    color: "#651717",
+    fontWeight: "600",
+    fontSize: 17,
+    marginBottom: 8,
+  },
+  mapWrapper: {
+    height: 300,
+    borderRadius: 12,
+    overflow: "hidden",
+    backgroundColor: "#ddd",
+  },
+  mapSubtitle: {
+    fontSize: 14,
+    color: "#555",
+    marginBottom: 8,
+    marginLeft: 4,
+  },
+
+  legendContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginBottom: 8,
+    marginLeft: 4,
+  },
+
+  legendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 12,
+    marginBottom: 4,
+  },
+
+  legendDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 4,
+  },
+
+  legendLabel: {
+    fontSize: 12,
+    color: "#333",
+  },
+  clearFiltersContainer: {
+    marginVertical: 8,
+    marginLeft: 4,
+    marginRight: 4,
+  },
 });

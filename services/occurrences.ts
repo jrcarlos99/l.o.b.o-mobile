@@ -6,9 +6,11 @@ const API_BASE_URL = "https://webapp-ocorrencias.onrender.com/api";
 //  Listar ocorrências com filtros
 export async function fetchOccurrences(
   token: string,
-  filters?: OccurrenceFilters
+  filters?: OccurrenceFilters,
+  page: number = 0,
+  size: number = 20
 ) {
-  const params: any = {};
+  const params: any = { ...filters, page, size };
 
   if (filters?.status) params.status = filters.status;
   if (filters?.regiao) params.regiao = filters.regiao;
@@ -16,17 +18,11 @@ export async function fetchOccurrences(
   if (filters?.tipo) params.tipo = filters.tipo;
 
   if (filters?.dataInicio) {
-    params.dataInicio =
-      filters.dataInicio instanceof Date
-        ? filters.dataInicio.toISOString().split("T")[0]
-        : filters.dataInicio;
+    params.dataInicio = filters.dataInicio.toISOString().split("T")[0];
   }
 
   if (filters?.dataFim) {
-    params.dataFim =
-      filters.dataFim instanceof Date
-        ? filters.dataFim.toISOString().split("T")[0]
-        : filters.dataFim;
+    params.dataFim = filters.dataFim.toISOString().split("T")[0];
   }
 
   const response = await axios.get(`${API_BASE_URL}/ocorrencias`, {
@@ -36,7 +32,7 @@ export async function fetchOccurrences(
     params,
   });
 
-  return response.data.content;
+  return response.data;
 }
 
 //  Criar ocorrência

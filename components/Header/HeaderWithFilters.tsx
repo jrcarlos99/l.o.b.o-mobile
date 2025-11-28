@@ -2,7 +2,7 @@ import { OccurrenceFilters } from "@/types/OccurrenceFilters";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
 import { useEffect, useState } from "react";
-import { Alert, Platform, Pressable, Text, View } from "react-native";
+import { Alert, Platform, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import HeaderBase from "./HeaderBase";
 import { styles } from "./style";
@@ -10,17 +10,15 @@ import { styles } from "./style";
 type Props = {
   avatarUrl: string;
   title: string;
-  onFilterPress: () => void;
   onFiltersChange: (filters: OccurrenceFilters) => void;
 };
 
 export default function HeaderWithFilters({
   avatarUrl,
   title,
-  onFilterPress,
   onFiltersChange,
 }: Props) {
-  const [periodFilter, setPeriodFilter] = useState("");
+  const [periodFilter, setPeriodFilter] = useState("periodo");
   const [typeFilter, setTypeFilter] = useState("tipo");
   const [regionFilter, setRegionFilter] = useState("regiao");
   const [statusFilter, setStatusFilter] = useState("status");
@@ -40,16 +38,53 @@ export default function HeaderWithFilters({
 
   const insets = useSafeAreaInsets();
 
-  // Normaliza valores para evitar envio de "todos", "tipo", etc.
   const normalize = (value: string) =>
     ["todos", "tipo", "status", "regiao"].includes(value) ? undefined : value;
 
-  // Atualiza os filtros no pai sempre que algo muda
   useEffect(() => {
+    const now = new Date();
+    let dataInicio: Date | undefined;
+    let dataFim: Date | undefined;
+
+    switch (periodFilter) {
+      case "hoje":
+        dataInicio = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        dataFim = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        break;
+      case "ontem":
+        const ontem = new Date(now);
+        ontem.setDate(now.getDate() - 1);
+        dataInicio = ontem;
+        dataFim = ontem;
+        break;
+      case "ultimos_7_dias":
+        const seteDias = new Date(now);
+        seteDias.setDate(now.getDate() - 7);
+        dataInicio = seteDias;
+        dataFim = now;
+        break;
+      case "mes_passado":
+        const primeiroDiaMesPassado = new Date(
+          now.getFullYear(),
+          now.getMonth() - 1,
+          1
+        );
+        const ultimoDiaMesPassado = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          0
+        );
+        dataInicio = primeiroDiaMesPassado;
+        dataFim = ultimoDiaMesPassado;
+        break;
+    }
+
     onFiltersChange({
       status: normalize(statusFilter),
       regiao: normalize(regionFilter) as OccurrenceFilters["regiao"],
       tipo: normalize(typeFilter) as OccurrenceFilters["tipo"],
+      dataInicio,
+      dataFim,
     });
   }, [statusFilter, regionFilter, typeFilter, periodFilter, onFiltersChange]);
 
@@ -75,16 +110,11 @@ export default function HeaderWithFilters({
               selectedValue={periodFilter}
               onValueChange={setPeriodFilter}
             >
-              <Picker.Item
-                label="Selecione o período"
-                value=""
-                enabled={false}
-                color="#888"
-              />
+              <Picker.Item label="Período" value="periodo" />
               <Picker.Item label="Todos" value="todos" />
               <Picker.Item label="Hoje" value="hoje" />
               <Picker.Item label="Ontem" value="ontem" />
-              <Picker.Item label="últimos 7 dias" value="ultimos_7_dias" />
+              <Picker.Item label="Últimos 7 dias" value="ultimos_7_dias" />
               <Picker.Item label="Mês passado" value="mes_passado" />
             </Picker>
           </View>
@@ -138,10 +168,6 @@ export default function HeaderWithFilters({
             </Picker>
           </View>
         </View>
-
-        <Pressable style={styles.filterButton} onPress={onFilterPress}>
-          <Text style={styles.filterButtonText}>Filtrar</Text>
-        </Pressable>
       </View>
 
       {showDatePicker && (

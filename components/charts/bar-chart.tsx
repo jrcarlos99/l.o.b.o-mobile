@@ -5,28 +5,31 @@ const screenWidth = Dimensions.get("window").width;
 
 export function CustomBarChart({
   data,
+  color = "#6B1B1B",
 }: {
   data: { labels: string[]; datasets: { data: number[] }[] };
+  color?: string;
 }) {
   const chartConfig = {
     backgroundGradientFrom: "#fff",
     backgroundGradientTo: "#fff",
-    color: (opacity = 1) => `rgba(107, 27, 27, ${opacity})`,
-    labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+    color: () => color,
+    labelColor: () => "#000",
     barPercentage: 0.6,
     propsForBackgroundLines: { stroke: "#e3e3e3" },
+    propsForLabels: { fontSize: 10 },
   };
 
   return (
     <BarChart
       data={data}
       width={screenWidth - 32}
-      height={220}
+      height={420}
       chartConfig={chartConfig}
-      verticalLabelRotation={0}
+      verticalLabelRotation={45}
       fromZero
       showValuesOnTopOfBars
-      style={{ borderRadius: 12 }}
+      style={{ borderRadius: 12, marginBottom: 16 }}
       yAxisLabel=""
       yAxisSuffix=""
     />

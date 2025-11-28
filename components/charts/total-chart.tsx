@@ -21,7 +21,7 @@ export function CustomTotalChart({ total }: { total: number }) {
     <BarChart
       data={data}
       width={screenWidth - 64}
-      height={160}
+      height={360}
       chartConfig={chartConfig}
       fromZero
       showValuesOnTopOfBars
