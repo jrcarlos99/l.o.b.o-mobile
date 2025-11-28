@@ -34,6 +34,8 @@ export default function Login() {
       setLoading(true);
       const token = await login(email, password);
 
+      console.log("🔑 Token JWT recebido:", token);
+
       await AsyncStorage.setItem("token", token);
 
       router.push("/(tabs)/occurrences");

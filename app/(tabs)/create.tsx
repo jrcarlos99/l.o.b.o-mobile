@@ -96,16 +96,13 @@ export default function CreateOccurrence() {
       try {
         setLoadingPickers(true);
         const token = await AsyncStorage.getItem("token");
-        console.log("Token recuperado para pickers:", token);
+
         if (!token) throw new Error("Token não encontrado");
 
         const [viaturas, equipes] = await Promise.all([
           fetchViaturas(token),
           fetchEquipes(token),
         ]);
-
-        console.log("🚨 Viaturas recebidas:", viaturas);
-        console.log("🚨 Equipes recebidas:", equipes);
 
         const viItems: PickerItem[] = [
           { label: "Selecione a viatura", value: "" },
@@ -192,7 +189,7 @@ export default function CreateOccurrence() {
         titulo: "Ocorrência registrada pelo app",
         descricao: description,
         solicitante: "Usuário do app",
-        regiao: region as RegiaoEnum, // cast only at payload
+        regiao: region as RegiaoEnum,
         cidade: address,
         dataHoraAbertura: date.toISOString(),
         status: "PENDENTE" as StatusEnum,
@@ -251,7 +248,7 @@ export default function CreateOccurrence() {
           <PickerField
             label="Tipo"
             value={type}
-            onChange={setType} // matches (v: string) => void
+            onChange={setType}
             required
             items={[
               { label: "Selecione o tipo", value: "" },
@@ -271,7 +268,7 @@ export default function CreateOccurrence() {
           <PickerField
             label="Região"
             value={region}
-            onChange={setRegion} // matches (v: string) => void
+            onChange={setRegion}
             required
             items={[
               { label: "Selecione a região", value: "" },

@@ -1,21 +1,33 @@
-import { format, parse } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import React from "react";
 import { SectionList, StyleSheet, Text } from "react-native";
 import OccurrenceCard from "./OccurrenceCard";
 
 type Occurrence = {
-  id: string;
+  id: number;
   tipo: string;
-  local: string;
-  dataHora: string;
+  titulo: string;
+  descricao: string;
+  cidade: string;
+  regiao: string;
+  status: string;
+  dataHoraAbertura: string;
 };
 
 function groupByMonth(occurrences: Occurrence[]) {
   const groups: Record<string, Occurrence[]> = {};
 
   occurrences.forEach((occ) => {
-    const date = parse(occ.dataHora, "dd/MM/yyyy - HH:mm", new Date());
+    if (!occ.dataHoraAbertura) return;
+
+    let date: Date;
+    try {
+      date = parseISO(occ.dataHoraAbertura);
+    } catch {
+      return;
+    }
+
     const key = format(date, "MMMM yyyy", { locale: ptBR });
 
     if (!groups[key]) groups[key] = [];
@@ -31,7 +43,7 @@ export function OccurrencesList({ data, headerOffset }: any) {
   return (
     <SectionList
       sections={grouped}
-      keyExtractor={(item) => item.id}
+      keyExtractor={(item) => item.id.toString()}
       renderSectionHeader={({ section: { title } }) => (
         <Text style={styles.sectionHeader}>{title}</Text>
       )}

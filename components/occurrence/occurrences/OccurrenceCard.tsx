@@ -1,11 +1,15 @@
 import React from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
-type Occurrence = {
-  id: string;
+export type Occurrence = {
+  id: number;
+  titulo: string;
+  descricao: string;
+  cidade: string;
+  regiao: string;
+  status: string;
   tipo: string;
-  local: string;
-  dataHora: string;
+  dataHoraAbertura: string;
 };
 
 type Props = {
@@ -13,13 +17,62 @@ type Props = {
 };
 
 export default function OccurrenceCard({ data }: Props) {
+  function getStatusColor(status: string) {
+    switch (status) {
+      case "PENDENTE":
+        return "#FFA500";
+      case "EM_ANDAMENTO":
+        return "#007BFF";
+      case "CONCLUIDO":
+        return "#28A745";
+      case "CANCELADO":
+        return "#DC3545";
+      default:
+        return "#6C2020";
+    }
+  }
+
+  function formatTipo(tipo: string) {
+    return tipo
+      .toLowerCase()
+      .split("_")
+      .map((word) => {
+        if (word === "de") return word;
+        return word.charAt(0).toUpperCase() + word.slice(1);
+      })
+      .join(" ");
+  }
+
   return (
     <View style={styles.card}>
       <View>
         <Text style={styles.cardId}>{data.id}</Text>
-        <Text style={styles.cardTitle}>{data.tipo}</Text>
-        <Text style={styles.cardLocal}>{data.local}</Text>
-        <Text style={styles.cardDate}>{data.dataHora}</Text>
+        <Text style={styles.cardTitle}>{formatTipo(data.tipo)}</Text>
+
+        <Text style={styles.cardLocal}>
+          {data.cidade && data.regiao
+            ? `${data.cidade}, ${data.regiao}`
+            : "Local não informado"}
+        </Text>
+
+        <Text style={styles.cardDate}>
+          {new Date(data.dataHoraAbertura).toLocaleString("pt-BR", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+        </Text>
+
+        <Text style={styles.cardDescription}>
+          {data.descricao || "Sem descrição"}
+        </Text>
+        <Text
+          style={[styles.cardStatus, { color: getStatusColor(data.status) }]}
+        >
+          {data.status}
+        </Text>
       </View>
       <Pressable
         onPress={() => Alert.alert("Detalhes", `Abrir ${data.tipo}`)}
@@ -66,6 +119,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#777",
   },
+  cardDescription: {
+    fontSize: 14,
+    color: "#444",
+    marginTop: 4,
+  },
+
   cardButton: {
     paddingLeft: 12,
   },
@@ -73,5 +132,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: "#6C2020",
+  },
+  cardStatus: {
+    fontSize: 14,
+    fontWeight: "600",
+    marginTop: 4,
   },
 });
