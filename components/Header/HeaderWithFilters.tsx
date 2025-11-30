@@ -4,8 +4,11 @@ import { Picker } from "@react-native-picker/picker";
 import { useEffect, useState } from "react";
 import { Alert, Platform, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import AvatarMenu from "./AvatarMenu";
 import HeaderBase from "./HeaderBase";
 import { styles } from "./style";
+
+import { useRouter } from "expo-router";
 
 type Props = {
   avatarUrl: string;
@@ -24,6 +27,9 @@ export default function HeaderWithFilters({
   const [statusFilter, setStatusFilter] = useState("status");
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [avatarMenuVisible, setAvatarMenuVisible] = useState(false);
+
+  const router = useRouter();
 
   const formattedDate = date.toLocaleDateString("pt-BR", {
     day: "2-digit",
@@ -97,7 +103,8 @@ export default function HeaderWithFilters({
         onNotificationsPress={() =>
           Alert.alert("Notificações", "Sem novas notificações!")
         }
-        onAvatarPress={() => Alert.alert("Avatar", "Menu do usuário")}
+        onAvatarPress={() => setAvatarMenuVisible(true)}
+        onLogoPress={() => router.push("/")}
       />
 
       <View style={styles.headerExtras}>
@@ -178,6 +185,11 @@ export default function HeaderWithFilters({
           onChange={handleDateChange}
         />
       )}
+
+      <AvatarMenu
+        visible={avatarMenuVisible}
+        onClose={() => setAvatarMenuVisible(false)}
+      />
     </View>
   );
 }

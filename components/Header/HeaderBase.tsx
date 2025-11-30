@@ -8,6 +8,7 @@ type Props = {
   onDatePress: () => void;
   onNotificationsPress: () => void;
   onAvatarPress: () => void;
+  onLogoPress: () => void;
 };
 
 export default function HeaderBase({
@@ -16,14 +17,17 @@ export default function HeaderBase({
   onDatePress,
   onNotificationsPress,
   onAvatarPress,
+  onLogoPress,
 }: Props) {
   return (
     <>
       <View style={styles.headerRow}>
-        <Image
-          source={require("@/assets/images/lobo-icon.png")}
-          style={styles.reactLogo}
-        />
+        <Pressable onPress={onLogoPress}>
+          <Image
+            source={require("@/assets/images/lobo-icon.png")}
+            style={styles.reactLogo}
+          />
+        </Pressable>
 
         <View style={styles.rightGroup}>
           <Pressable onPress={onNotificationsPress} style={styles.bellIcon}>

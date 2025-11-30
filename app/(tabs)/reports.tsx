@@ -1,3 +1,4 @@
+import AvatarMenu from "@/components/Header/AvatarMenu";
 import HeaderSimple from "@/components/Header/HeaderSimple";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -46,6 +47,7 @@ const reportTypes = [
 
 export default function ReportsScreen() {
   const [formattedDate, setFormattedDate] = useState("");
+  const [avatarMenuVisible, setAvatarMenuVisible] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -79,6 +81,8 @@ export default function ReportsScreen() {
           formattedDate={formattedDate}
           onDatePress={handleDatePress}
           onNotificationsPress={handleNotificationsPress}
+          onAvatarPress={() => setAvatarMenuVisible(true)}
+          onLogoPress={() => router.push("/")}
         />
 
         <ScrollView
@@ -107,6 +111,10 @@ export default function ReportsScreen() {
           </View>
         </ScrollView>
       </View>
+      <AvatarMenu
+        visible={avatarMenuVisible}
+        onClose={() => setAvatarMenuVisible(false)}
+      />
     </SafeAreaView>
   );
 }

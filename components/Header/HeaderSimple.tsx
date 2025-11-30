@@ -8,6 +8,8 @@ type Props = {
   formattedDate: string;
   onDatePress: () => void;
   onNotificationsPress: () => void;
+  onAvatarPress: () => void;
+  onLogoPress: () => void;
 };
 
 export default function HeaderSimple({
@@ -16,14 +18,18 @@ export default function HeaderSimple({
   formattedDate,
   onDatePress,
   onNotificationsPress,
+  onAvatarPress,
+  onLogoPress,
 }: Props) {
   return (
     <View style={styles.headerContainer}>
       <View style={styles.headerRow}>
-        <Image
-          source={require("@/assets/images/lobo-icon.png")}
-          style={styles.reactLogo}
-        />
+        <Pressable onPress={onLogoPress}>
+          <Image
+            source={require("@/assets/images/lobo-icon.png")}
+            style={styles.reactLogo}
+          />
+        </Pressable>
         <View style={styles.rightGroup}>
           <Pressable onPress={onNotificationsPress} style={styles.bellIcon}>
             <MaterialIcons
@@ -35,7 +41,9 @@ export default function HeaderSimple({
               <Text style={styles.badgeText}>3</Text>
             </View>
           </Pressable>
-          <Image source={{ uri: avatarUrl }} style={styles.avatarUser} />
+          <Pressable onPress={onAvatarPress}>
+            <Image source={{ uri: avatarUrl }} style={styles.avatarUser} />
+          </Pressable>
         </View>
       </View>
 
