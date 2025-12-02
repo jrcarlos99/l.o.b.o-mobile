@@ -1,22 +1,13 @@
+import { Occurrence } from "@/types/OccurrenceType";
 import React from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
-
-export type Occurrence = {
-  id: number;
-  titulo: string;
-  descricao: string;
-  cidade: string;
-  regiao: string;
-  status: string;
-  tipo: string;
-  dataHoraAbertura: string;
-};
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 type Props = {
   data: Occurrence;
+  onSelect?: (occurrence: Occurrence) => void;
 };
 
-export default function OccurrenceCard({ data }: Props) {
+export default function OccurrenceCard({ data, onSelect }: Props) {
   function getStatusColor(status: string) {
     switch (status) {
       case "PENDENTE":
@@ -74,10 +65,7 @@ export default function OccurrenceCard({ data }: Props) {
           {data.status}
         </Text>
       </View>
-      <Pressable
-        onPress={() => Alert.alert("Detalhes", `Abrir ${data.tipo}`)}
-        style={styles.cardButton}
-      >
+      <Pressable onPress={() => onSelect?.(data)} style={styles.cardButton}>
         <Text style={styles.cardDetails}>Detalhes {">"}</Text>
       </Pressable>
     </View>

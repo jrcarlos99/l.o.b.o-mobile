@@ -29,7 +29,11 @@ export interface Occurrence {
   latitude: number;
   longitude: number;
   historico?: unknown[];
-  anexos?: unknown[];
   criadoPor?: string;
   atualizadoPor?: string;
+  anexos?: {
+    id: number;
+    url_anexo: string;
+    tipo: "IMAGEM" | "ASSINATURA";
+  };
 }

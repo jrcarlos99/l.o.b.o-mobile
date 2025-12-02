@@ -1,6 +1,7 @@
 import HeaderWithFilters from "@/components/Header/HeaderWithFilters";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import { OccurrencesList } from "@/components/occurrence/occurrences/OccurrencesList";
+import OccurrenceDetailsModal from "@/components/OccurrenceDetailsModal";
 import { fetchOccurrences } from "@/services/occurrences";
 import { OccurrenceFilters } from "@/types/OccurrenceFilters";
 import { Occurrence } from "@/types/OccurrenceType";
@@ -15,6 +16,9 @@ export default function OccurrencesPage() {
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<OccurrenceFilters>({});
+  const [selectedOccurrence, setSelectedOccurrence] =
+    useState<Occurrence | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
   const updateFilters = useCallback((next: OccurrenceFilters) => {
     setFilters(next);
@@ -117,17 +121,20 @@ export default function OccurrencesPage() {
           onLoadMore={handleLoadMore}
           hasMore={hasMore}
           loading={loading}
+          onSelect={(occurrence) => {
+            setSelectedOccurrence(occurrence);
+            setModalVisible(true);
+          }}
         />
       )}
-      {/* {loading ? (
-        <ActivityIndicator
-          size="large"
-          color="#6C2020"
-          style={{ marginTop: 40 }}
+
+      {selectedOccurrence && (
+        <OccurrenceDetailsModal
+          visible={modalVisible}
+          onClose={() => setModalVisible(false)}
+          occurrence={selectedOccurrence}
         />
-      ) : (
-        <OccurrencesList data={occurrences} />
-      )} */}
+      )}
     </LayoutWrapper>
   );
 }

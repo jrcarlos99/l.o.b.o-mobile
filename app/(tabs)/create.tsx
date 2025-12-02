@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import NetInfo from "@react-native-community/netinfo";
-import { readAsStringAsync } from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
@@ -31,7 +30,10 @@ import {
   fetchViaturas,
 } from "@/services/occurrences";
 import { styles } from "@/styles/createStyles";
+
+import { uploadImageToSupabase } from "@/utils/upload";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { supabase } from "../../utils/supabase";
 
 // Backend enums (for reference and payload casting)
 type RegiaoEnum = "AGRE" | "SERT" | "RMR" | "ZDMT";
@@ -144,6 +146,7 @@ export default function CreateOccurrence() {
       const result = await ImagePicker.launchImageLibraryAsync({
         quality: 0.6,
         allowsEditing: true,
+        mediaTypes: "images",
       });
 
       if (!result.canceled && result.assets?.length) {
@@ -152,6 +155,7 @@ export default function CreateOccurrence() {
           ...p,
           { uri: asset.uri, timestamp: new Date().toISOString() },
         ]);
+        console.log("Imagem selecionada:", asset.uri);
       }
     } catch (err) {
       console.warn(err);
@@ -179,12 +183,6 @@ export default function CreateOccurrence() {
       const token = await AsyncStorage.getItem("token");
       if (!token) throw new Error("Token não encontrado");
 
-      const anexoBase64: string[] = [];
-      for (const img of images) {
-        const base64 = await readAsStringAsync(img.uri, "base64");
-        anexoBase64.push(`data:image/jpeg;base64, ${base64}`);
-      }
-
       const occurrenceData = {
         titulo: "Ocorrência registrada pelo app",
         descricao: description,
@@ -197,16 +195,59 @@ export default function CreateOccurrence() {
         latitude: gps?.lat,
         longitude: gps?.lon,
         historico: ["ABERTA"],
-        anexos: anexoBase64,
         viaturaId: Number(vehicle),
         equipeId: Number(team),
       };
 
+      // 1) Cria a ocorrência
       const nova = await createOccurrence(token, occurrenceData);
+      if (!nova?.id) throw new Error("Ocorrência não foi criada corretamente");
 
+      // 2) Salva imagens anexadas
+      for (const img of images) {
+        const filename = `anexo-${Date.now()}-${Math.random()
+          .toString(36)
+          .slice(2)}.jpg`;
+        const publicUrl = await uploadImageToSupabase(img.uri, filename);
+
+        if (publicUrl) {
+          await supabase.from("ocorrencia_anexos").insert({
+            ocorrencia_id: nova.id,
+            url_anexo: publicUrl,
+            tipo: "IMAGEM",
+          });
+        }
+      }
+
+      // 3) Salva assinatura vinculada
+      if (signatureText) {
+        const content = signatureText.replace("data:image/png;base64,", "");
+        const buffer = Uint8Array.from(atob(content), (c) => c.charCodeAt(0));
+        const filename = `assinaturas/${nova.id}-${Date.now()}.png`;
+
+        const { error } = await supabase.storage
+          .from("anexos")
+          .upload(filename, buffer, { contentType: "image/png" });
+
+        if (!error) {
+          const { data: urlData } = supabase.storage
+            .from("anexos")
+            .getPublicUrl(filename);
+          await supabase.from("ocorrencia_anexos").insert({
+            ocorrencia_id: nova.id,
+            url_anexo: urlData.publicUrl,
+            tipo: "ASSINATURA",
+          });
+        } else {
+          console.error("Erro ao salvar assinatura:", error);
+        }
+      }
+
+      // 4) Finaliza
       Alert.alert("Sucesso", "Ocorrência enviada com sucesso.");
       console.log("Ocorrência criada:", nova);
 
+      // Resetar formulário
       setType("");
       setRegion("");
       setVehicle("");

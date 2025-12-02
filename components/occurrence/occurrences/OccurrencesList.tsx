@@ -1,19 +1,9 @@
+import { Occurrence } from "@/types/OccurrenceType";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import React from "react";
 import { ActivityIndicator, SectionList, StyleSheet, Text } from "react-native";
 import OccurrenceCard from "./OccurrenceCard";
-
-type Occurrence = {
-  id: number;
-  tipo: string;
-  titulo: string;
-  descricao: string;
-  cidade: string;
-  regiao: string;
-  status: string;
-  dataHoraAbertura: string;
-};
 
 function groupByMonth(occurrences: Occurrence[]) {
   const groups: Record<string, Occurrence[]> = {};
@@ -37,19 +27,23 @@ function groupByMonth(occurrences: Occurrence[]) {
   return Object.entries(groups).map(([title, data]) => ({ title, data }));
 }
 
+type Props = {
+  data: Occurrence[];
+  headerOffset?: number;
+  onLoadMore?: () => void;
+  hasMore?: boolean;
+  loading?: boolean;
+  onSelect?: (occurrence: Occurrence) => void;
+};
+
 export function OccurrencesList({
   data,
   headerOffset,
   onLoadMore,
   hasMore,
   loading,
-}: {
-  data: Occurrence[];
-  headerOffset?: number;
-  onLoadMore?: () => void;
-  hasMore?: boolean;
-  loading?: boolean;
-}) {
+  onSelect,
+}: Props) {
   const grouped = groupByMonth(data);
 
   return (
@@ -59,7 +53,9 @@ export function OccurrencesList({
       renderSectionHeader={({ section: { title } }) => (
         <Text style={styles.sectionHeader}>{title}</Text>
       )}
-      renderItem={({ item }) => <OccurrenceCard data={item} />}
+      renderItem={({ item }) => (
+        <OccurrenceCard data={item} onSelect={onSelect} />
+      )}
       onEndReached={() => {
         if (hasMore && !loading && onLoadMore) {
           onLoadMore();
