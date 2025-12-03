@@ -1,3 +1,5 @@
+import { useUser } from "@/context/UserContext";
+import { supabase } from "@/utils/supabase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -16,13 +18,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AuthInput from "../components/AuthInput";
 import PrimaryButton from "../components/PrimaryButton";
 import { colors } from "../constants/colors";
-import { login } from "../services/auth"; // serviço que chama POST /auth/login
+import { getCurrentUser, login } from "../services/auth";
 
 const { height } = Dimensions.get("window");
 
 export default function Login() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { setUser } = useUser();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,11 +35,24 @@ export default function Login() {
   const handleLogin = async () => {
     try {
       setLoading(true);
+
       const token = await login(email, password);
-
       console.log("🔑 Token JWT recebido:", token);
-
       await AsyncStorage.setItem("token", token);
+
+      supabase.auth.setSession({
+        access_token: token,
+        refresh_token: token,
+      });
+
+      const profile = await getCurrentUser(token);
+      console.log("👤 Dados do usuário:", profile);
+
+      setUser({
+        id: profile.id,
+        nome: profile.nome,
+        avatar_url: profile.avatar_url,
+      });
 
       router.push("/(tabs)/occurrences");
     } catch (error) {

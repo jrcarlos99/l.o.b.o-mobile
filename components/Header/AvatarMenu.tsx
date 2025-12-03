@@ -1,8 +1,10 @@
 import { colors } from "@/constants/colors";
+import { useUser } from "@/context/UserContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React from "react";
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { alterarFotoPerfil } from "../alterarFotoPerfil";
 
 type Props = {
   visible: boolean;
@@ -11,6 +13,7 @@ type Props = {
 
 export default function AvatarMenu({ visible, onClose }: Props) {
   const router = useRouter();
+  const { user, setUser } = useUser();
 
   const handleLogout = async () => {
     await AsyncStorage.removeItem("token");
@@ -21,6 +24,21 @@ export default function AvatarMenu({ visible, onClose }: Props) {
   const handleConfig = () => {
     onClose();
     router.push("/settings");
+  };
+
+  const handleChangeAvatar = async () => {
+    if (!user) {
+      console.log("Nenhum usuário logado");
+      return;
+    }
+    const newUrl = await alterarFotoPerfil(user.id);
+    if (newUrl) {
+      console.log("Novo avatar:", newUrl);
+      setUser({ ...user, avatar_url: newUrl });
+    } else {
+      console.log("Upload falhou ou cancelado");
+    }
+    onClose();
   };
 
   return (
@@ -36,6 +54,10 @@ export default function AvatarMenu({ visible, onClose }: Props) {
         activeOpacity={1}
       >
         <View style={styles.menu}>
+          <TouchableOpacity onPress={handleChangeAvatar}>
+            <Text style={styles.menuItem}>Alterar Foto de Perfil</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity onPress={handleConfig}>
             <Text style={styles.menuItem}>Configurações</Text>
           </TouchableOpacity>

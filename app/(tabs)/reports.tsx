@@ -1,11 +1,10 @@
 import AvatarMenu from "@/components/Header/AvatarMenu";
 import HeaderSimple from "@/components/Header/HeaderSimple";
+import { useUser } from "@/context/UserContext";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-const avatarUrl = "https://github.com/jrcarlos99.png";
 
 // Dados dos tipos de relatórios
 const reportTypes = [
@@ -46,6 +45,7 @@ const reportTypes = [
 ];
 
 export default function ReportsScreen() {
+  const { user } = useUser();
   const [formattedDate, setFormattedDate] = useState("");
   const [avatarMenuVisible, setAvatarMenuVisible] = useState(false);
   const router = useRouter();
@@ -77,7 +77,7 @@ export default function ReportsScreen() {
       <View style={styles.container}>
         <HeaderSimple
           title="Relatórios"
-          avatarUrl={avatarUrl}
+          avatarUrl={user?.avatar_url ?? "https://placehold.co/100x100/png"}
           formattedDate={formattedDate}
           onDatePress={handleDatePress}
           onNotificationsPress={handleNotificationsPress}

@@ -8,6 +8,8 @@ import AvatarMenu from "./AvatarMenu";
 import HeaderBase from "./HeaderBase";
 import { styles } from "./style";
 
+import { useUser } from "@/context/UserContext";
+
 import { useRouter } from "expo-router";
 
 type Props = {
@@ -30,6 +32,7 @@ export default function HeaderWithFilters({
   const [avatarMenuVisible, setAvatarMenuVisible] = useState(false);
 
   const router = useRouter();
+  const { user } = useUser();
 
   const formattedDate = date.toLocaleDateString("pt-BR", {
     day: "2-digit",
@@ -97,7 +100,7 @@ export default function HeaderWithFilters({
   return (
     <View style={[styles.headerContainer, { paddingTop: insets.top }]}>
       <HeaderBase
-        avatarUrl={avatarUrl}
+        avatarUrl={user?.avatar_url ?? "https://placehold.co/100x100/png"}
         formattedDate={formattedDate}
         onDatePress={() => setShowDatePicker(true)}
         onNotificationsPress={() =>

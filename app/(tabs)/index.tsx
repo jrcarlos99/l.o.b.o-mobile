@@ -12,6 +12,8 @@ import { Alert, Button, Platform, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { styles } from "../../styles/IndexStyles";
 
+import { useUser } from "@/context/UserContext";
+
 type Occurrence = {
   id: string;
   latitude: number;
@@ -29,8 +31,7 @@ export default function Index() {
   const [statusData, setStatusData] = useState<any>(null);
   const [total, setTotal] = useState<number>(0);
   const [occurrences, setOccurrences] = useState<Occurrence[]>([]);
-
-  const avatarUrl = "https://i.pravatar.cc/150?img=3";
+  const { user } = useUser();
 
   const handleDateChange = (_: any, selectedDate?: Date) => {
     setShowDatePicker(Platform.OS === "ios");
@@ -136,7 +137,7 @@ export default function Index() {
         headerBackgroundColor={{ light: "#E5E4E4", dark: "#E5E4E4" }}
         headerImage={
           <HeaderWithFilters
-            avatarUrl={avatarUrl}
+            avatarUrl={user?.avatar_url ?? "https://placehold.co/100x100/png"}
             title="Estatísticas"
             onFiltersChange={setFilters}
           />

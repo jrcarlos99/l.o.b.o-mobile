@@ -2,6 +2,7 @@ import HeaderWithFilters from "@/components/Header/HeaderWithFilters";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import { OccurrencesList } from "@/components/occurrence/occurrences/OccurrencesList";
 import OccurrenceDetailsModal from "@/components/OccurrenceDetailsModal";
+import { useUser } from "@/context/UserContext";
 import { fetchOccurrences } from "@/services/occurrences";
 import { OccurrenceFilters } from "@/types/OccurrenceFilters";
 import { Occurrence } from "@/types/OccurrenceType";
@@ -10,7 +11,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Text, View } from "react-native";
 
 export default function OccurrencesPage() {
-  const [avatarUrl] = useState("https://github.com/jrcarlos99.png");
+  const { user } = useUser();
   const [occurrences, setOccurrences] = useState<Occurrence[]>([]);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -102,7 +103,7 @@ export default function OccurrencesPage() {
     <LayoutWrapper
       header={
         <HeaderWithFilters
-          avatarUrl={avatarUrl}
+          avatarUrl={user?.avatar_url ?? "https://placehold.co/100x100/png"}
           title="Minhas Ocorrências"
           onFiltersChange={updateFilters}
         />
