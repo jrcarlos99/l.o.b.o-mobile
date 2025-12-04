@@ -1,6 +1,6 @@
 import { StyleSheet } from "react-native";
 
-export const mergulhoStyles = StyleSheet.create({
+export const atividadeComunitariaStyles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: "#E3E2DD",
@@ -20,14 +20,14 @@ export const mergulhoStyles = StyleSheet.create({
     alignItems: "center",
   },
   backText: {
-    color: "#FE9900",
+    color: "#C4953B",
     fontSize: 16,
     marginLeft: 4,
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#FE9900",
+    color: "#C4953B",
   },
   headerPlaceholder: {
     width: 60,
@@ -42,6 +42,7 @@ export const mergulhoStyles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
     borderWidth: 2,
+    borderColor: "#C4953B",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -53,6 +54,7 @@ export const mergulhoStyles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 16,
     textAlign: "center",
+    color: "#C4953B",
   },
   section: {
     marginBottom: 24,
@@ -93,12 +95,44 @@ export const mergulhoStyles = StyleSheet.create({
     minHeight: 80,
     textAlignVertical: "top",
   },
+  checkboxGroup: {
+    flexDirection: "column",
+    gap: 8,
+  },
+  checkboxContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 4,
+    marginRight: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  checkboxChecked: {
+    backgroundColor: "#C4953B",
+    borderColor: "#C4953B",
+  },
+  checkboxText: {
+    color: "white",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  checkboxLabel: {
+    fontSize: 14,
+    color: "#333",
+  },
   exportButton: {
     padding: 16,
     borderRadius: 4,
     alignItems: "center",
     marginTop: 16,
-    backgroundColor: "#FE9900",
+    backgroundColor: "#C4953B",
   },
   exportButtonText: {
     color: "white",

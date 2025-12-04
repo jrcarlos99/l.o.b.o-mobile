@@ -1,102 +1,71 @@
+import FormCheckbox from "@/components/Forms/FormCheckbox";
+import FormInput from "@/components/Forms/FormInput";
+import FormRow from "@/components/Forms/FormRow";
+import FormTextArea from "@/components/Forms/FormTextArea";
+import { atividadeComunitariaSchema } from "@/schema/atividadeComunitariaSchema";
+import { atividadeComunitariaStyles as styles } from "@/styles/atividadeComunitariaStyles";
 import { Ionicons } from "@expo/vector-icons";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
-import {
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { useForm } from "react-hook-form";
+import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-// Componente Checkbox customizado (reutilizável)
-const Checkbox = ({
-  label,
-  value,
-  onValueChange,
-}: {
-  label: string;
-  value: boolean;
-  onValueChange: (value: boolean) => void;
-}) => {
-  return (
-    <TouchableOpacity
-      style={styles.checkboxContainer}
-      onPress={() => onValueChange(!value)}
-    >
-      <View style={[styles.checkbox, value && styles.checkboxChecked]}>
-        {value && <Text style={styles.checkboxText}>✓</Text>}
-      </View>
-      <Text style={styles.checkboxLabel}>{label}</Text>
-    </TouchableOpacity>
-  );
-};
 
 export default function AtividadeComunitariaScreen() {
   const router = useRouter();
-  const [formData, setFormData] = useState({
-    // 1. Identificação
-    pontoBase: "",
-    ciops: "",
-    viatura: "",
-    aviso: "",
-    data: "",
-
-    // 2. Evento
-    nomeEvento: "",
-    horaInicio: "",
-    horaFim: "",
-    endereco: "",
-
-    // 3. Responsável
-    responsavel: "",
-    cpf: "",
-    instituicao: "",
-
-    // 4. Classificação
-    grupo: "",
-    missao: "",
-    publico: "",
-    participantes: "",
-
-    // 5. Atividades Executadas
-    apoio: false,
-    educativa: false,
-    social: false,
-    religiosa: false,
-    acoesSociais: false,
-
-    // 6. Recursos
-    efetivo: "",
-    viaturas: "",
-    embarcacoes: "",
-    equipamentos: "",
-    estruturas: "",
-
-    // 7. Informações Adicionais
-    adicionais: "",
-
-    // 8. Responsáveis
-    bombeiro: "",
-    comandante: "",
-    matricula: "",
-    telefone: "",
-    rubrica: "",
+  const { control, handleSubmit } = useForm({
+    resolver: yupResolver(atividadeComunitariaSchema),
+    defaultValues: {
+      // 1. Identificação
+      pontoBase: "",
+      ciops: "",
+      viatura: "",
+      aviso: "",
+      data: "",
+      // 2. Evento
+      nomeEvento: "",
+      horaInicio: "",
+      horaFim: "",
+      endereco: "",
+      // 3. Responsável
+      responsavel: "",
+      cpf: "",
+      instituicao: "",
+      // 4. Classificação
+      grupo: "",
+      missao: "",
+      publico: "",
+      participantes: "",
+      // 5. Atividades Executadas
+      apoio: false,
+      educativa: false,
+      social: false,
+      religiosa: false,
+      acoesSociais: false,
+      // 6. Recursos
+      efetivo: "",
+      viaturas: "",
+      embarcacoes: "",
+      equipamentos: "",
+      estruturas: "",
+      // 7. Informações Adicionais
+      adicionais: "",
+      // 8. Responsáveis
+      bombeiro: "",
+      comandante: "",
+      matricula: "",
+      telefone: "",
+      rubrica: "",
+    },
   });
 
-  const handleExport = () => {
-    Alert.alert(
-      "Salvar Formulário",
-      "Formulário de Atividade Comunitária salvo com sucesso!",
-      [{ text: "OK" }]
-    );
+  const onSubmit = (data: any) => {
+    console.log("Dados validados", data);
+    Alert.alert("Sucesso", "Formulário validado e pronto para exportar!");
   };
 
-  const updateField = (field: string, value: string | boolean) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+  const handleExportClick = () => {
+    handleSubmit(onSubmit)();
   };
 
   return (
@@ -115,420 +84,257 @@ export default function AtividadeComunitariaScreen() {
       </View>
 
       <ScrollView style={styles.container}>
-        <View style={[styles.card, { borderColor: "#C4953B" }]}>
-          <Text style={[styles.title, { color: "#C4953B" }]}>
-            Formulário de Atividade Comunitária
-          </Text>
+        <View style={styles.card}>
+          <Text style={styles.title}>Formulário de Atividade Comunitária</Text>
 
           {/* 1. Identificação */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Identificação da Ocorrência</Text>
-
-            <View style={styles.row}>
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="Ponto Base"
-                value={formData.pontoBase}
-                onChangeText={(text) => updateField("pontoBase", text)}
-              />
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="CIOPS / Seção"
-                value={formData.ciops}
-                onChangeText={(text) => updateField("ciops", text)}
-              />
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="Viatura Responsável"
-                value={formData.viatura}
-                onChangeText={(text) => updateField("viatura", text)}
-              />
-            </View>
-
-            <View style={styles.row}>
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="Nº do Aviso"
-                value={formData.aviso}
-                onChangeText={(text) => updateField("aviso", text)}
-              />
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="Data (DD/MM/AAAA)"
-                value={formData.data}
-                onChangeText={(text) => updateField("data", text)}
-              />
-            </View>
-          </View>
+          <Text style={styles.sectionTitle}>Identificação da Ocorrência</Text>
+          <FormRow style={styles.row}>
+            <FormInput
+              control={control}
+              name="pontoBase"
+              placeholder="Ponto Base"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="ciops"
+              placeholder="CIOPS / Seção"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="viatura"
+              placeholder="Viatura Responsável"
+              style={[styles.input, styles.flex1]}
+            />
+          </FormRow>
+          <FormRow style={styles.row}>
+            <FormInput
+              control={control}
+              name="aviso"
+              placeholder="Nº do Aviso"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="data"
+              placeholder="Data (DD/MM/AAAA)"
+              style={[styles.input, styles.flex1]}
+            />
+          </FormRow>
 
           {/* 2. Evento */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Evento</Text>
-
-            <TextInput
-              style={styles.input}
-              placeholder="Nome do Evento"
-              value={formData.nomeEvento}
-              onChangeText={(text) => updateField("nomeEvento", text)}
+          <Text style={styles.sectionTitle}>Evento</Text>
+          <FormInput
+            control={control}
+            name="nomeEvento"
+            placeholder="Nome do Evento"
+            style={styles.input}
+          />
+          <FormRow style={styles.row}>
+            <FormInput
+              control={control}
+              name="horaInicio"
+              placeholder="Hora Início"
+              style={[styles.input, styles.flex1]}
             />
-
-            <View style={styles.row}>
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="Hora Início"
-                value={formData.horaInicio}
-                onChangeText={(text) => updateField("horaInicio", text)}
-              />
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="Hora Fim"
-                value={formData.horaFim}
-                onChangeText={(text) => updateField("horaFim", text)}
-              />
-            </View>
-
-            <TextInput
-              style={styles.input}
-              placeholder="Endereço completo"
-              value={formData.endereco}
-              onChangeText={(text) => updateField("endereco", text)}
+            <FormInput
+              control={control}
+              name="horaFim"
+              placeholder="Hora Fim"
+              style={[styles.input, styles.flex1]}
             />
-          </View>
+          </FormRow>
+          <FormInput
+            control={control}
+            name="endereco"
+            placeholder="Endereço completo"
+            style={styles.input}
+          />
 
           {/* 3. Responsável */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Responsável pela Atividade</Text>
-
-            <View style={styles.row}>
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="Nome do Responsável"
-                value={formData.responsavel}
-                onChangeText={(text) => updateField("responsavel", text)}
-              />
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="CPF"
-                value={formData.cpf}
-                onChangeText={(text) => updateField("cpf", text)}
-              />
-            </View>
-
-            <TextInput
-              style={styles.input}
-              placeholder="Instituição"
-              value={formData.instituicao}
-              onChangeText={(text) => updateField("instituicao", text)}
+          <Text style={styles.sectionTitle}>Responsável pela Atividade</Text>
+          <FormRow style={styles.row}>
+            <FormInput
+              control={control}
+              name="responsavel"
+              placeholder="Nome do Responsável"
+              style={[styles.input, styles.flex1]}
             />
-          </View>
+            <FormInput
+              control={control}
+              name="cpf"
+              placeholder="CPF"
+              style={[styles.input, styles.flex1]}
+            />
+          </FormRow>
+          <FormInput
+            control={control}
+            name="instituicao"
+            placeholder="Instituição"
+            style={styles.input}
+          />
 
           {/* 4. Classificação */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Classificação</Text>
-
-            <View style={styles.row}>
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="Grupo/Subgrupo"
-                value={formData.grupo}
-                onChangeText={(text) => updateField("grupo", text)}
-              />
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="Tipo de Missão"
-                value={formData.missao}
-                onChangeText={(text) => updateField("missao", text)}
-              />
-            </View>
-
-            <View style={styles.row}>
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="Público Atendido"
-                value={formData.publico}
-                onChangeText={(text) => updateField("publico", text)}
-              />
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="Nº de Pessoas"
-                value={formData.participantes}
-                onChangeText={(text) => updateField("participantes", text)}
-                keyboardType="numeric"
-              />
-            </View>
-          </View>
+          <Text style={styles.sectionTitle}>Classificação</Text>
+          <FormRow style={styles.row}>
+            <FormInput
+              control={control}
+              name="grupo"
+              placeholder="Grupo/Subgrupo"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="missao"
+              placeholder="Tipo de Missão"
+              style={[styles.input, styles.flex1]}
+            />
+          </FormRow>
+          <FormRow style={styles.row}>
+            <FormInput
+              control={control}
+              name="publico"
+              placeholder="Público Atendido"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="participantes"
+              placeholder="Nº de Pessoas"
+              keyboardType="numeric"
+              style={[styles.input, styles.flex1]}
+            />
+          </FormRow>
 
           {/* 5. Atividades Executadas */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Atividades Executadas</Text>
-
-            <View style={styles.checkboxGroup}>
-              <Checkbox
-                label="Apoio à Instituição"
-                value={formData.apoio}
-                onValueChange={(value) => updateField("apoio", value)}
-              />
-              <Checkbox
-                label="Interação Educativa"
-                value={formData.educativa}
-                onValueChange={(value) => updateField("educativa", value)}
-              />
-              <Checkbox
-                label="Interação Social"
-                value={formData.social}
-                onValueChange={(value) => updateField("social", value)}
-              />
-              <Checkbox
-                label="Interação Religiosa"
-                value={formData.religiosa}
-                onValueChange={(value) => updateField("religiosa", value)}
-              />
-              <Checkbox
-                label="Encaminhamento para Ações Sociais"
-                value={formData.acoesSociais}
-                onValueChange={(value) => updateField("acoesSociais", value)}
-              />
-            </View>
+          <Text style={styles.sectionTitle}>Atividades Executadas</Text>
+          <View style={styles.checkboxGroup}>
+            <FormCheckbox
+              control={control}
+              name="apoio"
+              label="Apoio à Instituição"
+            />
+            <FormCheckbox
+              control={control}
+              name="educativa"
+              label="Interação Educativa"
+            />
+            <FormCheckbox
+              control={control}
+              name="social"
+              label="Interação Social"
+            />
+            <FormCheckbox
+              control={control}
+              name="religiosa"
+              label="Interação Religiosa"
+            />
+            <FormCheckbox
+              control={control}
+              name="acoesSociais"
+              label="Encaminhamento para Ações Sociais"
+            />
           </View>
 
           {/* 6. Recursos */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Recursos Empregados</Text>
-
-            <View style={styles.row}>
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="Efetivo"
-                value={formData.efetivo}
-                onChangeText={(text) => updateField("efetivo", text)}
-              />
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="Viaturas"
-                value={formData.viaturas}
-                onChangeText={(text) => updateField("viaturas", text)}
-              />
-            </View>
-
-            <View style={styles.row}>
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="Embarcações"
-                value={formData.embarcacoes}
-                onChangeText={(text) => updateField("embarcacoes", text)}
-              />
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="Equipamentos"
-                value={formData.equipamentos}
-                onChangeText={(text) => updateField("equipamentos", text)}
-              />
-            </View>
-
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Estruturas de Apoio"
-              multiline
-              numberOfLines={3}
-              value={formData.estruturas}
-              onChangeText={(text) => updateField("estruturas", text)}
+          <Text style={styles.sectionTitle}>Recursos Empregados</Text>
+          <FormRow style={styles.row}>
+            <FormInput
+              control={control}
+              name="efetivo"
+              placeholder="Efetivo"
+              style={[styles.input, styles.flex1]}
             />
-          </View>
+            <FormInput
+              control={control}
+              name="viaturas"
+              placeholder="Viaturas"
+              style={[styles.input, styles.flex1]}
+            />
+          </FormRow>
+          <FormRow style={styles.row}>
+            <FormInput
+              control={control}
+              name="embarcacoes"
+              placeholder="Embarcações"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="equipamentos"
+              placeholder="Equipamentos"
+              style={[styles.input, styles.flex1]}
+            />
+          </FormRow>
+          <FormTextArea
+            control={control}
+            name="estruturas"
+            placeholder="Estruturas de Apoio"
+            style={styles.input}
+            height={90}
+            numberOfLines={3}
+          />
 
           {/* 7. Informações Adicionais */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Informações Adicionais</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Histórico resumido, observações relevantes"
-              multiline
-              numberOfLines={4}
-              value={formData.adicionais}
-              onChangeText={(text) => updateField("adicionais", text)}
-            />
-          </View>
+          <Text style={styles.sectionTitle}>Informações Adicionais</Text>
+          <FormTextArea
+            control={control}
+            name="adicionais"
+            placeholder="Histórico resumido, observações relevantes"
+            style={styles.input}
+            height={110}
+            numberOfLines={4}
+          />
 
           {/* 8. Responsáveis */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Responsáveis</Text>
-
-            <View style={styles.row}>
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="Bombeiro Responsável"
-                value={formData.bombeiro}
-                onChangeText={(text) => updateField("bombeiro", text)}
-              />
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="Comandante da Operação"
-                value={formData.comandante}
-                onChangeText={(text) => updateField("comandante", text)}
-              />
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="Matrícula"
-                value={formData.matricula}
-                onChangeText={(text) => updateField("matricula", text)}
-              />
-            </View>
-
-            <View style={styles.row}>
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="Telefone (81) 99999-9999"
-                value={formData.telefone}
-                onChangeText={(text) => updateField("telefone", text)}
-                keyboardType="phone-pad"
-              />
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="Rubrica"
-                value={formData.rubrica}
-                onChangeText={(text) => updateField("rubrica", text)}
-              />
-            </View>
-          </View>
+          <Text style={styles.sectionTitle}>Responsáveis</Text>
+          <FormRow style={styles.row}>
+            <FormInput
+              control={control}
+              name="bombeiro"
+              placeholder="Bombeiro Responsável"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="comandante"
+              placeholder="Comandante da Operação"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="matricula"
+              placeholder="Matrícula"
+              style={[styles.input, styles.flex1]}
+            />
+          </FormRow>
+          <FormRow style={styles.row}>
+            <FormInput
+              control={control}
+              name="telefone"
+              placeholder="Telefone (81) 99999-9999"
+              keyboardType="phone-pad"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="rubrica"
+              placeholder="Rubrica"
+              style={[styles.input, styles.flex1]}
+            />
+          </FormRow>
 
           {/* Botão Final */}
           <TouchableOpacity
-            style={[styles.exportButton, { backgroundColor: "#C4953B" }]}
-            onPress={handleExport}
+            style={styles.exportButton}
+            onPress={handleExportClick}
           >
-            <Text style={styles.exportButtonText}>Salvar Formulário</Text>
+            <Text style={styles.exportButtonText}>Exportar PDF</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#E3E2DD",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: "#E5E4E4",
-    borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
-  },
-  backButton: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  backText: {
-    color: "#C4953B",
-    fontSize: 16,
-    marginLeft: 4,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#C4953B",
-  },
-  headerPlaceholder: {
-    width: 60,
-  },
-  container: {
-    flex: 1,
-    padding: 16,
-  },
-  card: {
-    backgroundColor: "white",
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 16,
-    textAlign: "center",
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 12,
-    color: "#333",
-  },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 12,
-  },
-  flex1: {
-    flex: 1,
-    marginHorizontal: 4,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 4,
-    padding: 12,
-    marginBottom: 12,
-    backgroundColor: "#fff",
-    fontSize: 14,
-  },
-  textArea: {
-    minHeight: 80,
-    textAlignVertical: "top",
-  },
-  checkboxGroup: {
-    flexDirection: "column",
-  },
-  checkboxContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 4,
-    marginRight: 8,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  checkboxChecked: {
-    backgroundColor: "#C4953B",
-    borderColor: "#C4953B",
-  },
-  checkboxText: {
-    color: "white",
-    fontSize: 12,
-    fontWeight: "bold",
-  },
-  checkboxLabel: {
-    fontSize: 14,
-    color: "#333",
-    flex: 1,
-  },
-  exportButton: {
-    padding: 16,
-    borderRadius: 4,
-    alignItems: "center",
-    marginTop: 16,
-  },
-  exportButtonText: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-});

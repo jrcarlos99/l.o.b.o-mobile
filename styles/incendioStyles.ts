@@ -65,12 +65,12 @@ export const incendioStyles = StyleSheet.create({
   },
   row: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: 8,
     marginBottom: 12,
   },
   flex1: {
     flex: 1,
-    marginHorizontal: 4,
   },
   inputContainer: {
     marginBottom: 12,
@@ -90,7 +90,7 @@ export const incendioStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ddd",
     borderRadius: 4,
-    padding: 12,
+    padding: 10,
     backgroundColor: "#fff",
     fontSize: 14,
   },
@@ -161,6 +161,7 @@ export const incendioStyles = StyleSheet.create({
     borderRadius: 4,
     alignItems: "center",
     marginTop: 16,
+    backgroundColor: "#951B2A",
   },
   exportButtonText: {
     color: "white",

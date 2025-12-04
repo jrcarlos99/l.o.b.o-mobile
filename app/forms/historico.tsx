@@ -1,46 +1,53 @@
+import FormInput from "@/components/Forms/FormInput";
+import FormRow from "@/components/Forms/FormRow";
+import FormTextArea from "@/components/Forms/FormTextArea";
+import { historicoSchema } from "@/schema/historicoSchema";
 import { historicoStyles as styles } from "@/styles/historicoStyles";
 import { Ionicons } from "@expo/vector-icons";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
-import {
-  Alert,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { useForm } from "react-hook-form";
+import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function FolhaHistoricoScreen() {
   const router = useRouter();
-  const [formData, setFormData] = useState({
-    pontoBase: "",
-    ome: "",
-    viatura: "",
-    aviso: "",
-    data: "",
-    hora: "",
-    tipo: "",
-    codigo: "",
-    sigilo: "",
-    historico: "",
-    posto: "",
-    nomeGuerra: "",
-    matricula: "",
-    demaisGuarnicao: "",
-    dataVisto: "",
-    assinatura: "",
+  const { control, handleSubmit } = useForm({
+    resolver: yupResolver(historicoSchema),
+    defaultValues: {
+      // 1. Identificação
+      pontoBase: "",
+      ome: "",
+      viatura: "",
+      aviso: "",
+      data: "",
+      hora: "",
+      tipo: "",
+      codigo: "",
+      sigilo: "",
+      // 2. Histórico
+      historico: "",
+      // 3. Guarnição Empenhada
+      posto: "",
+      nomeGuerra: "",
+      matricula: "",
+      demaisGuarnicao: "",
+      // 4. Visto
+      dataVisto: "",
+      assinatura: "",
+    },
   });
 
-  const handleExport = () => {
-    Alert.alert("Salvar Histórico", "Folha de Histórico salva com sucesso!", [
-      { text: "OK" },
-    ]);
+  const onSubmit = (data: any) => {
+    console.log("Dados validados", data);
+    Alert.alert(
+      "Sucesso",
+      "Folha de Histórico validada e pronta para exportar!"
+    );
   };
 
-  const updateField = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+  const handleExportClick = () => {
+    handleSubmit(onSubmit)();
   };
 
   return (
@@ -59,154 +66,138 @@ export default function FolhaHistoricoScreen() {
       </View>
 
       <ScrollView style={styles.container}>
-        <View style={[styles.card, { borderColor: "#A29F90" }]}>
-          <Text style={[styles.title, { color: "#A29F90" }]}>
-            Folha de Histórico
-          </Text>
+        <View style={styles.card}>
+          <Text style={styles.title}>Folha de Histórico</Text>
 
           {/* 1. Identificação */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Identificação da Ocorrência</Text>
+          <Text style={styles.sectionTitle}>Identificação da Ocorrência</Text>
+          <FormRow style={styles.row}>
+            <FormInput
+              control={control}
+              name="pontoBase"
+              placeholder="Ponto Base"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="ome"
+              placeholder="OME / Seção"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="viatura"
+              placeholder="Viatura Responsável"
+              style={[styles.input, styles.flex1]}
+            />
+          </FormRow>
 
-            <View style={styles.row}>
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="Ponto Base"
-                value={formData.pontoBase}
-                onChangeText={(text) => updateField("pontoBase", text)}
-              />
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="OME / Seção"
-                value={formData.ome}
-                onChangeText={(text) => updateField("ome", text)}
-              />
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="Viatura Responsável"
-                value={formData.viatura}
-                onChangeText={(text) => updateField("viatura", text)}
-              />
-            </View>
+          <FormRow style={styles.row}>
+            <FormInput
+              control={control}
+              name="aviso"
+              placeholder="Nº do Aviso"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="data"
+              placeholder="Data (DD/MM/AAAA)"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="hora"
+              placeholder="Hora"
+              style={[styles.input, styles.flex1]}
+            />
+          </FormRow>
 
-            <View style={styles.row}>
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="Nº do Aviso"
-                value={formData.aviso}
-                onChangeText={(text) => updateField("aviso", text)}
-              />
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="Data (DD/MM/AAAA)"
-                value={formData.data}
-                onChangeText={(text) => updateField("data", text)}
-              />
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="Hora"
-                value={formData.hora}
-                onChangeText={(text) => updateField("hora", text)}
-              />
-            </View>
-
-            <View style={styles.row}>
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="Tipo"
-                value={formData.tipo}
-                onChangeText={(text) => updateField("tipo", text)}
-              />
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="Código"
-                value={formData.codigo}
-                onChangeText={(text) => updateField("codigo", text)}
-              />
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="Sigilo"
-                value={formData.sigilo}
-                onChangeText={(text) => updateField("sigilo", text)}
-              />
-            </View>
-          </View>
+          <FormRow style={styles.row}>
+            <FormInput
+              control={control}
+              name="tipo"
+              placeholder="Tipo"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="codigo"
+              placeholder="Código"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="sigilo"
+              placeholder="Sigilo"
+              style={[styles.input, styles.flex1]}
+            />
+          </FormRow>
 
           {/* 2. Histórico */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Histórico</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Descreva detalhadamente os fatos: data, hora, local, ações realizadas, desfecho..."
-              multiline
-              numberOfLines={8}
-              value={formData.historico}
-              onChangeText={(text) => updateField("historico", text)}
-            />
-          </View>
+          <Text style={styles.sectionTitle}>Histórico</Text>
+          <FormTextArea
+            control={control}
+            name="historico"
+            placeholder="Descreva detalhadamente os fatos: data, hora, local, ações realizadas, desfecho..."
+            style={styles.input}
+            height={140}
+            numberOfLines={6}
+          />
 
           {/* 3. Guarnição Empenhada */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Guarnição Empenhada</Text>
-
-            <View style={styles.row}>
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="Posto/Graduação"
-                value={formData.posto}
-                onChangeText={(text) => updateField("posto", text)}
-              />
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="Nome de Guerra"
-                value={formData.nomeGuerra}
-                onChangeText={(text) => updateField("nomeGuerra", text)}
-              />
-              <TextInput
-                style={[styles.input, styles.flex1]}
-                placeholder="Matrícula"
-                value={formData.matricula}
-                onChangeText={(text) => updateField("matricula", text)}
-              />
-            </View>
-
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Demais componentes da guarnição"
-              multiline
-              numberOfLines={3}
-              value={formData.demaisGuarnicao}
-              onChangeText={(text) => updateField("demaisGuarnicao", text)}
+          <Text style={styles.sectionTitle}>Guarnição Empenhada</Text>
+          <FormRow style={styles.row}>
+            <FormInput
+              control={control}
+              name="posto"
+              placeholder="Posto/Graduação"
+              style={[styles.input, styles.flex1]}
             />
-          </View>
+            <FormInput
+              control={control}
+              name="nomeGuerra"
+              placeholder="Nome de Guerra"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="matricula"
+              placeholder="Matrícula"
+              style={[styles.input, styles.flex1]}
+            />
+          </FormRow>
+
+          <FormTextArea
+            control={control}
+            name="demaisGuarnicao"
+            placeholder="Demais componentes da guarnição"
+            style={styles.input}
+            height={90}
+            numberOfLines={3}
+          />
 
           {/* 4. Visto da Divisão de Operações */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-              Visto da Divisão de Operações
-            </Text>
-
-            <TextInput
-              style={styles.input}
-              placeholder="Data Visto (DD/MM/AAAA)"
-              value={formData.dataVisto}
-              onChangeText={(text) => updateField("dataVisto", text)}
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Assinatura / Rubrica"
-              value={formData.assinatura}
-              onChangeText={(text) => updateField("assinatura", text)}
-            />
-          </View>
+          <Text style={styles.sectionTitle}>Visto da Divisão de Operações</Text>
+          <FormInput
+            control={control}
+            name="dataVisto"
+            placeholder="Data Visto (DD/MM/AAAA)"
+            style={styles.input}
+          />
+          <FormInput
+            control={control}
+            name="assinatura"
+            placeholder="Assinatura / Rubrica"
+            style={styles.input}
+          />
 
           {/* Botão Final */}
           <TouchableOpacity
-            style={[styles.exportButton, { backgroundColor: "#A29F90" }]}
-            onPress={handleExport}
+            style={styles.exportButton}
+            onPress={handleExportClick}
           >
-            <Text style={styles.exportButtonText}>Salvar Histórico</Text>
+            <Text style={styles.exportButtonText}>Exportar PDF</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

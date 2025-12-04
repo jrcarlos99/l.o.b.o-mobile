@@ -1,79 +1,74 @@
+import FormInput from "@/components/Forms/FormInput";
+import FormRow from "@/components/Forms/FormRow";
+import FormTextArea from "@/components/Forms/FormTextArea";
+import { mergulhoSchema } from "@/schema/mergulhoSchema";
 import { mergulhoStyles as styles } from "@/styles/mergulhoStyles";
 import { Ionicons } from "@expo/vector-icons";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
-import {
-  Alert,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { useForm } from "react-hook-form";
+import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function MergulhoScreen() {
   const router = useRouter();
-  const [formData, setFormData] = useState({
-    // 1. Identificação
-    pontoBase: "",
-    ome: "",
-    viatura: "",
-    aviso: "",
-    data: "",
-    hora: "",
-
-    // 2. Classificação
-    grupo: "",
-    tipoBusca: "",
-
-    // 3. Local
-    local: "",
-    referencia: "",
-
-    // 4. Vítimas
-    qualificacao: "",
-    qtdVitimas: "",
-    vitimaLocalizada: "",
-    cadaverLocalizado: "",
-    bombeiroServico: "",
-
-    // 5. Operação de Mergulho
-    tipoOperacao: "",
-    numMergulhadores: "",
-    profundidade: "",
-    tempoFundo: "",
-    tempoTotal: "",
-    correnteza: "",
-    tipoFundo: "",
-    ambiente: "",
-    coordenadas: "",
-
-    // 6. Recursos
-    cilindroNum: "",
-    barInicio: "",
-    barFim: "",
-    outrosRecursos: "",
-
-    // 7. Responsáveis
-    mergulhadorMatricula: "",
-    mergulhadorNome: "",
-    bombeiro: "",
-    comandante: "",
-    telefone: "",
-    rubrica: "",
+  const { control, handleSubmit } = useForm({
+    resolver: yupResolver(mergulhoSchema),
+    defaultValues: {
+      // 1. Identificação
+      pontoBase: "",
+      ome: "",
+      viatura: "",
+      aviso: "",
+      data: "",
+      hora: "",
+      // 2. Classificação
+      grupo: "",
+      tipoBusca: "",
+      // 3. Local
+      local: "",
+      referencia: "",
+      // 4. Vítimas
+      qualificacao: "",
+      qtdVitimas: "",
+      vitimaLocalizada: "",
+      cadaverLocalizado: "",
+      bombeiroServico: "",
+      // 5. Operação de Mergulho
+      tipoOperacao: "",
+      numMergulhadores: "",
+      profundidade: "",
+      tempoFundo: "",
+      tempoTotal: "",
+      correnteza: "",
+      tipoFundo: "",
+      ambiente: "",
+      coordenadas: "",
+      // 6. Recursos
+      cilindroNum: "",
+      barInicio: "",
+      barFim: "",
+      outrosRecursos: "",
+      // 7. Responsáveis
+      mergulhadorMatricula: "",
+      mergulhadorNome: "",
+      bombeiro: "",
+      comandante: "",
+      telefone: "",
+      rubrica: "",
+    },
   });
 
-  const handleExport = () => {
+  const onSubmit = (data: any) => {
+    console.log("Dados validados", data);
     Alert.alert(
-      "Salvar Formulário",
-      "Formulário de Operações de Mergulho salvo com sucesso!",
-      [{ text: "OK" }]
+      "Sucesso",
+      "Formulário de Mergulho validado e pronto para exportar!"
     );
   };
 
-  const updateField = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+  const handleExportClick = () => {
+    handleSubmit(onSubmit)();
   };
 
   return (
@@ -92,406 +87,268 @@ export default function MergulhoScreen() {
       </View>
 
       <ScrollView style={styles.container}>
-        <View style={[styles.card, { borderColor: "#FE9900" }]}>
-          <Text style={[styles.title, { color: "#FE9900" }]}>
-            Formulário de Operações de Mergulho
-          </Text>
+        <View style={styles.card}>
+          <Text style={styles.title}>Formulário de Operações de Mergulho</Text>
 
           {/* 1. Identificação */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Identificação da Ocorrência</Text>
-
-            <View style={styles.row}>
-              <View style={[styles.inputContainer, styles.flex1]}>
-                <Text style={styles.label}>Ponto Base</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Ponto Base"
-                  value={formData.pontoBase}
-                  onChangeText={(text) => updateField("pontoBase", text)}
-                />
-              </View>
-              <View style={[styles.inputContainer, styles.flex1]}>
-                <Text style={styles.label}>OME / Seção</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="OME / Seção"
-                  value={formData.ome}
-                  onChangeText={(text) => updateField("ome", text)}
-                />
-              </View>
-              <View style={[styles.inputContainer, styles.flex1]}>
-                <Text style={styles.label}>Viatura Responsável</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Viatura Responsável"
-                  value={formData.viatura}
-                  onChangeText={(text) => updateField("viatura", text)}
-                />
-              </View>
-            </View>
-
-            <View style={styles.row}>
-              <View style={[styles.inputContainer, styles.flex1]}>
-                <Text style={styles.label}>Nº do Aviso</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Nº do Aviso"
-                  value={formData.aviso}
-                  onChangeText={(text) => updateField("aviso", text)}
-                />
-              </View>
-              <View style={[styles.inputContainer, styles.flex1]}>
-                <Text style={styles.label}>Data</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Data (DD/MM/AAAA)"
-                  value={formData.data}
-                  onChangeText={(text) => updateField("data", text)}
-                />
-              </View>
-              <View style={[styles.inputContainer, styles.flex1]}>
-                <Text style={styles.label}>Hora</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Hora"
-                  value={formData.hora}
-                  onChangeText={(text) => updateField("hora", text)}
-                />
-              </View>
-            </View>
-          </View>
+          <Text style={styles.sectionTitle}>Identificação da Ocorrência</Text>
+          <FormRow style={styles.row}>
+            <FormInput
+              control={control}
+              name="pontoBase"
+              placeholder="Ponto Base"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="ome"
+              placeholder="OME / Seção"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="viatura"
+              placeholder="Viatura Responsável"
+              style={[styles.input, styles.flex1]}
+            />
+          </FormRow>
+          <FormRow style={styles.row}>
+            <FormInput
+              control={control}
+              name="aviso"
+              placeholder="Nº do Aviso"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="data"
+              placeholder="Data (DD/MM/AAAA)"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="hora"
+              placeholder="Hora"
+              style={[styles.input, styles.flex1]}
+            />
+          </FormRow>
 
           {/* 2. Classificação */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Classificação</Text>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Grupo/Subgrupo</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Grupo/Subgrupo"
-                value={formData.grupo}
-                onChangeText={(text) => updateField("grupo", text)}
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Tipo de Busca/Salvamento</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Tipo de Busca/Salvamento"
-                value={formData.tipoBusca}
-                onChangeText={(text) => updateField("tipoBusca", text)}
-              />
-            </View>
-          </View>
+          <Text style={styles.sectionTitle}>Classificação</Text>
+          <FormInput
+            control={control}
+            name="grupo"
+            placeholder="Grupo/Subgrupo"
+            style={styles.input}
+          />
+          <FormInput
+            control={control}
+            name="tipoBusca"
+            placeholder="Tipo de Busca/Salvamento"
+            style={styles.input}
+          />
 
           {/* 3. Local */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Local da Operação</Text>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Local</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Ex: Mar, Rio, Represa, Açude"
-                value={formData.local}
-                onChangeText={(text) => updateField("local", text)}
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Referência/Especificação</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Referência/Especificação"
-                value={formData.referencia}
-                onChangeText={(text) => updateField("referencia", text)}
-              />
-            </View>
-          </View>
+          <Text style={styles.sectionTitle}>Local da Operação</Text>
+          <FormInput
+            control={control}
+            name="local"
+            placeholder="Ex: Mar, Rio, Represa, Açude"
+            style={styles.input}
+          />
+          <FormInput
+            control={control}
+            name="referencia"
+            placeholder="Referência/Especificação"
+            style={styles.input}
+          />
 
           {/* 4. Vítimas */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Vítimas</Text>
-
-            <View style={styles.row}>
-              <View style={[styles.inputContainer, styles.flex1]}>
-                <Text style={styles.label}>Qualificação da Vítima</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Qualificação da Vítima"
-                  value={formData.qualificacao}
-                  onChangeText={(text) => updateField("qualificacao", text)}
-                />
-              </View>
-              <View style={[styles.inputContainer, styles.flex1]}>
-                <Text style={styles.label}>Quantidade de Vítimas</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Quantidade de Vítimas"
-                  value={formData.qtdVitimas}
-                  onChangeText={(text) => updateField("qtdVitimas", text)}
-                  keyboardType="numeric"
-                />
-              </View>
-            </View>
-
-            <View style={styles.row}>
-              <View style={[styles.inputContainer, styles.flex1]}>
-                <Text style={styles.label}>Vítima Localizada?</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Sim/Não"
-                  value={formData.vitimaLocalizada}
-                  onChangeText={(text) => updateField("vitimaLocalizada", text)}
-                />
-              </View>
-              <View style={[styles.inputContainer, styles.flex1]}>
-                <Text style={styles.label}>Cadáver Localizado?</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Sim/Não"
-                  value={formData.cadaverLocalizado}
-                  onChangeText={(text) =>
-                    updateField("cadaverLocalizado", text)
-                  }
-                />
-              </View>
-              <View style={[styles.inputContainer, styles.flex1]}>
-                <Text style={styles.label}>Bombeiro em Serviço?</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Sim/Não"
-                  value={formData.bombeiroServico}
-                  onChangeText={(text) => updateField("bombeiroServico", text)}
-                />
-              </View>
-            </View>
-          </View>
+          <Text style={styles.sectionTitle}>Vítimas</Text>
+          <FormRow style={styles.row}>
+            <FormInput
+              control={control}
+              name="qualificacao"
+              placeholder="Qualificação da Vítima"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="qtdVitimas"
+              placeholder="Quantidade"
+              keyboardType="numeric"
+              style={[styles.input, styles.flex1]}
+            />
+          </FormRow>
+          <FormRow style={styles.row}>
+            <FormInput
+              control={control}
+              name="vitimaLocalizada"
+              placeholder="Vítima Localizada?"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="cadaverLocalizado"
+              placeholder="Cadáver Localizado?"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="bombeiroServico"
+              placeholder="Bombeiro em Serviço?"
+              style={[styles.input, styles.flex1]}
+            />
+          </FormRow>
 
           {/* 5. Operação de Mergulho */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Operação de Mergulho</Text>
-
-            <View style={styles.row}>
-              <View style={[styles.inputContainer, styles.flex1]}>
-                <Text style={styles.label}>Tipo de Operação</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Tipo de Operação"
-                  value={formData.tipoOperacao}
-                  onChangeText={(text) => updateField("tipoOperacao", text)}
-                />
-              </View>
-              <View style={[styles.inputContainer, styles.flex1]}>
-                <Text style={styles.label}>Nº de Mergulhadores</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Nº de Mergulhadores"
-                  value={formData.numMergulhadores}
-                  onChangeText={(text) => updateField("numMergulhadores", text)}
-                  keyboardType="numeric"
-                />
-              </View>
-            </View>
-
-            <View style={styles.row}>
-              <View style={[styles.inputContainer, styles.flex1]}>
-                <Text style={styles.label}>Profundidade (m)</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Profundidade (m)"
-                  value={formData.profundidade}
-                  onChangeText={(text) => updateField("profundidade", text)}
-                  keyboardType="numeric"
-                />
-              </View>
-              <View style={[styles.inputContainer, styles.flex1]}>
-                <Text style={styles.label}>Tempo de Fundo</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Tempo de Fundo"
-                  value={formData.tempoFundo}
-                  onChangeText={(text) => updateField("tempoFundo", text)}
-                />
-              </View>
-              <View style={[styles.inputContainer, styles.flex1]}>
-                <Text style={styles.label}>Tempo Total Submerso</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Tempo Total Submerso"
-                  value={formData.tempoTotal}
-                  onChangeText={(text) => updateField("tempoTotal", text)}
-                />
-              </View>
-              <View style={[styles.inputContainer, styles.flex1]}>
-                <Text style={styles.label}>Correnteza</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Sim/Não"
-                  value={formData.correnteza}
-                  onChangeText={(text) => updateField("correnteza", text)}
-                />
-              </View>
-            </View>
-
-            <View style={styles.row}>
-              <View style={[styles.inputContainer, styles.flex1]}>
-                <Text style={styles.label}>Tipo de Fundo</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Areia, Pedras..."
-                  value={formData.tipoFundo}
-                  onChangeText={(text) => updateField("tipoFundo", text)}
-                />
-              </View>
-              <View style={[styles.inputContainer, styles.flex1]}>
-                <Text style={styles.label}>Ambiente</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Normal, Poluído..."
-                  value={formData.ambiente}
-                  onChangeText={(text) => updateField("ambiente", text)}
-                />
-              </View>
-              <View style={[styles.inputContainer, styles.flex1]}>
-                <Text style={styles.label}>Coordenadas</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Coordenadas (Lat/Long)"
-                  value={formData.coordenadas}
-                  onChangeText={(text) => updateField("coordenadas", text)}
-                />
-              </View>
-            </View>
-          </View>
+          <Text style={styles.sectionTitle}>Operação de Mergulho</Text>
+          <FormRow style={styles.row}>
+            <FormInput
+              control={control}
+              name="tipoOperacao"
+              placeholder="Tipo de Operação"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="numMergulhadores"
+              placeholder="Nº de Mergulhadores"
+              keyboardType="numeric"
+              style={[styles.input, styles.flex1]}
+            />
+          </FormRow>
+          <FormRow style={styles.row}>
+            <FormInput
+              control={control}
+              name="profundidade"
+              placeholder="Profundidade (m)"
+              keyboardType="numeric"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="tempoFundo"
+              placeholder="Tempo de Fundo"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="tempoTotal"
+              placeholder="Tempo Total Submerso"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="correnteza"
+              placeholder="Correnteza?"
+              style={[styles.input, styles.flex1]}
+            />
+          </FormRow>
+          <FormRow style={styles.row}>
+            <FormInput
+              control={control}
+              name="tipoFundo"
+              placeholder="Tipo de Fundo"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="ambiente"
+              placeholder="Ambiente"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="coordenadas"
+              placeholder="Coordenadas (Lat/Long)"
+              style={[styles.input, styles.flex1]}
+            />
+          </FormRow>
 
           {/* 6. Recursos */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Recursos Utilizados</Text>
-
-            <View style={styles.row}>
-              <View style={[styles.inputContainer, styles.flex1]}>
-                <Text style={styles.label}>Cilindro Nº</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Cilindro Nº"
-                  value={formData.cilindroNum}
-                  onChangeText={(text) => updateField("cilindroNum", text)}
-                />
-              </View>
-              <View style={[styles.inputContainer, styles.flex1]}>
-                <Text style={styles.label}>Pressão Inicial (bar)</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Pressão Inicial (bar)"
-                  value={formData.barInicio}
-                  onChangeText={(text) => updateField("barInicio", text)}
-                  keyboardType="numeric"
-                />
-              </View>
-              <View style={[styles.inputContainer, styles.flex1]}>
-                <Text style={styles.label}>Pressão Final (bar)</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Pressão Final (bar)"
-                  value={formData.barFim}
-                  onChangeText={(text) => updateField("barFim", text)}
-                  keyboardType="numeric"
-                />
-              </View>
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Outros Recursos</Text>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder="Outros Recursos (máscara, computador de mergulho, etc.)"
-                multiline
-                numberOfLines={3}
-                value={formData.outrosRecursos}
-                onChangeText={(text) => updateField("outrosRecursos", text)}
-              />
-            </View>
-          </View>
+          <Text style={styles.sectionTitle}>Recursos Utilizados</Text>
+          <FormRow style={styles.row}>
+            <FormInput
+              control={control}
+              name="cilindroNum"
+              placeholder="Cilindro Nº"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="barInicio"
+              placeholder="Pressão Inicial (bar)"
+              keyboardType="numeric"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="barFim"
+              placeholder="Pressão Final (bar)"
+              keyboardType="numeric"
+              style={[styles.input, styles.flex1]}
+            />
+          </FormRow>
+          <FormTextArea
+            control={control}
+            name="outrosRecursos"
+            placeholder="Outros Recursos (máscara, computador de mergulho, etc.)"
+            style={styles.input}
+            height={90}
+            numberOfLines={3}
+          />
 
           {/* 7. Responsáveis */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Responsáveis</Text>
-
-            <View style={styles.row}>
-              <View style={[styles.inputContainer, styles.flex1]}>
-                <Text style={styles.label}>Matrícula do Mergulhador</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Matrícula do Mergulhador"
-                  value={formData.mergulhadorMatricula}
-                  onChangeText={(text) =>
-                    updateField("mergulhadorMatricula", text)
-                  }
-                />
-              </View>
-              <View style={[styles.inputContainer, styles.flex1]}>
-                <Text style={styles.label}>Nome de Guerra do Mergulhador</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Nome de Guerra do Mergulhador"
-                  value={formData.mergulhadorNome}
-                  onChangeText={(text) => updateField("mergulhadorNome", text)}
-                />
-              </View>
-            </View>
-
-            <View style={styles.row}>
-              <View style={[styles.inputContainer, styles.flex1]}>
-                <Text style={styles.label}>Bombeiro Responsável</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Bombeiro Responsável"
-                  value={formData.bombeiro}
-                  onChangeText={(text) => updateField("bombeiro", text)}
-                />
-              </View>
-              <View style={[styles.inputContainer, styles.flex1]}>
-                <Text style={styles.label}>Comandante da Operação</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Comandante da Operação"
-                  value={formData.comandante}
-                  onChangeText={(text) => updateField("comandante", text)}
-                />
-              </View>
-              <View style={[styles.inputContainer, styles.flex1]}>
-                <Text style={styles.label}>Telefone</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="(81) 99999-9999"
-                  value={formData.telefone}
-                  onChangeText={(text) => updateField("telefone", text)}
-                  keyboardType="phone-pad"
-                />
-              </View>
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Rubrica</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Rubrica"
-                value={formData.rubrica}
-                onChangeText={(text) => updateField("rubrica", text)}
-              />
-            </View>
-          </View>
+          <Text style={styles.sectionTitle}>Responsáveis</Text>
+          <FormRow style={styles.row}>
+            <FormInput
+              control={control}
+              name="mergulhadorMatricula"
+              placeholder="Matrícula do Mergulhador"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="mergulhadorNome"
+              placeholder="Nome de Guerra do Mergulhador"
+              style={[styles.input, styles.flex1]}
+            />
+          </FormRow>
+          <FormRow style={styles.row}>
+            <FormInput
+              control={control}
+              name="bombeiro"
+              placeholder="Bombeiro Responsável"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="comandante"
+              placeholder="Comandante da Operação"
+              style={[styles.input, styles.flex1]}
+            />
+            <FormInput
+              control={control}
+              name="telefone"
+              placeholder="Telefone"
+              keyboardType="phone-pad"
+              style={[styles.input, styles.flex1]}
+            />
+          </FormRow>
+          <FormInput
+            control={control}
+            name="rubrica"
+            placeholder="Rubrica"
+            style={styles.input}
+          />
 
           {/* Botão Final */}
           <TouchableOpacity
-            style={[styles.exportButton, { backgroundColor: "#FE9900" }]}
-            onPress={handleExport}
+            style={styles.exportButton}
+            onPress={handleExportClick}
           >
-            <Text style={styles.exportButtonText}>Salvar Formulário</Text>
+            <Text style={styles.exportButtonText}>Exportar PDF</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

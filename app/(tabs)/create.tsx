@@ -14,6 +14,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as yup from "yup";
 
 import ActionButton from "@/components/occurrence/ActionButton";
 import FormField from "@/components/occurrence/FormField";
@@ -54,6 +55,16 @@ type StatusEnum =
   | "CONCLUIDO";
 
 type PickerItem = { label: string; value: string };
+
+const occurrenceSchema = yup.object({
+  type: yup.string().required("Selecione o tipo"),
+  region: yup.string().required("Selecione a região"),
+  date: yup.date().required("Selecione a data"),
+  vehicle: yup.string().required("Selecione a viatura"),
+  team: yup.string().required("Selecione a equipe"),
+  description: yup.string().trim().required("Descreva a ocorrência"),
+  address: yup.string().optional(),
+});
 
 export default function CreateOccurrence() {
   const insets = useSafeAreaInsets();
@@ -183,6 +194,11 @@ export default function CreateOccurrence() {
       const token = await AsyncStorage.getItem("token");
       if (!token) throw new Error("Token não encontrado");
 
+      await occurrenceSchema.validate(
+        { type, region, vehicle, team, description, address, date },
+        { abortEarly: false }
+      );
+
       const occurrenceData = {
         titulo: "Ocorrência registrada pelo app",
         descricao: description,
@@ -257,8 +273,12 @@ export default function CreateOccurrence() {
       setImages([]);
       setSignatureText("");
       router.back();
-    } catch (error) {
-      Alert.alert("Erro", "Não foi possível criar a ocorrência.");
+    } catch (error: any) {
+      if (error.name === "ValidationError") {
+        Alert.alert("Erro de validação", error.errors.join("\n"));
+      } else {
+        Alert.alert("Erro", "Não foi possível criar a ocorrência.");
+      }
       console.error(error);
     }
   };

@@ -65,12 +65,12 @@ export const prevencaoStyles = StyleSheet.create({
   },
   row: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: 8,
     marginBottom: 12,
   },
   flex1: {
     flex: 1,
-    marginHorizontal: 4,
   },
   inputContainer: {
     marginBottom: 12,
@@ -85,7 +85,7 @@ export const prevencaoStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ddd",
     borderRadius: 4,
-    padding: 12,
+    padding: 10,
     backgroundColor: "#fff",
     fontSize: 14,
   },
@@ -105,6 +105,7 @@ export const prevencaoStyles = StyleSheet.create({
   },
   checkboxGroup: {
     flexDirection: "column",
+    gap: 8,
   },
   checkboxContainer: {
     flexDirection: "row",
@@ -140,6 +141,7 @@ export const prevencaoStyles = StyleSheet.create({
     borderRadius: 4,
     alignItems: "center",
     marginTop: 16,
+    backgroundColor: "#6AC66F",
   },
   exportButtonText: {
     color: "white",

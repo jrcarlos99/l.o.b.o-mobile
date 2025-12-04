@@ -60,24 +60,23 @@ export const basicoStyles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: "600",
+    marginTop: 24,
     marginBottom: 12,
     color: "#333",
   },
   row: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 12,
+    flexWrap: "wrap",
+    gap: 8,
   },
   flex1: {
     flex: 1,
-    marginHorizontal: 4,
   },
   input: {
     borderWidth: 1,
     borderColor: "#ddd",
-    borderRadius: 4,
+    borderRadius: 6,
     padding: 12,
-    marginBottom: 12,
     backgroundColor: "#fff",
     fontSize: 14,
   },
@@ -87,6 +86,8 @@ export const basicoStyles = StyleSheet.create({
   },
   checkboxGroup: {
     flexDirection: "column",
+    gap: 8,
+    marginBottom: 12,
   },
   checkboxContainer: {
     flexDirection: "row",
@@ -119,9 +120,9 @@ export const basicoStyles = StyleSheet.create({
   exportButton: {
     backgroundColor: "#00968A",
     padding: 16,
-    borderRadius: 4,
+    borderRadius: 8,
     alignItems: "center",
-    marginTop: 16,
+    marginTop: 24,
   },
   exportButtonText: {
     color: "white",
