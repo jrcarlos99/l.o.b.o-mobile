@@ -3,22 +3,17 @@ import FormRow from "@/components/Forms/FormRow";
 import FormTextArea from "@/components/Forms/FormTextArea";
 import { incendioSchema } from "@/schema/incendioSchema";
 import { incendioStyles as styles } from "@/styles/incendioStyles";
+import { supabase } from "@/utils/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useRouter } from "expo-router";
+import { Picker } from "@react-native-picker/picker";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
-import { useForm } from "react-hook-form";
-import {
-  Alert,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Controller, useForm } from "react-hook-form";
+import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-// Componente Tooltip simples
+// Tooltip simples
 const Tooltip = ({
   text,
   children,
@@ -47,50 +42,84 @@ const Tooltip = ({
 
 export default function FormularioIncendioScreen() {
   const router = useRouter();
-  const { control, handleSubmit, watch } = useForm({
+  const { occurrenceId } = useLocalSearchParams();
+
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
     resolver: yupResolver(incendioSchema),
     defaultValues: {
-      // Identificação
       pontoBase: "",
       viatura: "",
       data: "",
-      // Classificação
       desastre: "",
       codigoDesastre: "",
       grupo: "",
-      // Local
       endereco: "",
       tipoEdificacao: "",
       agente: "",
-      // Recursos
       agua: "",
       espuma: "",
-      // Danos
       bens: "",
-      // Responsáveis
       proprietario: "",
       telefone: "",
       comandante: "",
     },
   });
 
-  const desastreValue = watch("desastre");
+  const onSubmit = async (data: any) => {
+    try {
+      if (!occurrenceId) {
+        Alert.alert("Erro", "ID da ocorrência não encontrado.");
+        return;
+      }
 
-  const onSubmit = (data: any) => {
-    console.log("Dados validados", data);
-    Alert.alert(
-      "Sucesso",
-      "Formulário de Incêndio validado e pronto para exportar!"
-    );
+      const { error } = await supabase.from("form_incendio").insert({
+        ocorrencia_id: Number(occurrenceId),
+        ponto_base: data.pontoBase,
+        viatura: data.viatura,
+        data: data.data,
+
+        desastre: data.desastre,
+        codigo_desastre: data.codigoDesastre,
+        grupo: data.grupo,
+
+        endereco: data.endereco,
+        tipo_edificacao: data.tipoEdificacao,
+        agente: data.agente,
+
+        agua: data.agua,
+        espuma: data.espuma,
+
+        bens: data.bens,
+
+        proprietario: data.proprietario,
+        telefone: data.telefone,
+        comandante: data.comandante,
+      });
+
+      if (error) throw error;
+
+      Alert.alert("Sucesso", "Formulário de Incêndio salvo com sucesso!");
+      router.replace("/(tabs)/occurrences");
+    } catch (error) {
+      console.error("Erro ao salvar formulário de incêndio:", error);
+      Alert.alert("Erro", "Ocorreu um erro ao salvar o formulário.");
+    }
   };
 
   const handleExportClick = () => {
-    handleSubmit(onSubmit)();
+    handleSubmit(onSubmit, (invalid) => {
+      console.log("Formulário inválido:", invalid);
+      Alert.alert("Erro", "Preencha todos os campos obrigatórios.");
+    })();
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* Header com botão de voltar */}
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => router.back()}
@@ -134,15 +163,27 @@ export default function FormularioIncendioScreen() {
           <Text style={styles.sectionTitle}>Classificação</Text>
 
           <View style={styles.row}>
+            {/* DESASTRE COM CONTROLLER */}
             <View style={[styles.inputContainer, styles.flex1]}>
               <Text style={styles.label}>Associado a Desastre?</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Sim / Não"
-                value={desastreValue}
-                onChangeText={(text) => (control._formValues.desastre = text)}
+
+              <Controller
+                control={control}
+                name="desastre"
+                render={({ field: { onChange, value } }) => (
+                  <Picker
+                    selectedValue={value}
+                    onValueChange={onChange}
+                    style={styles.input}
+                  >
+                    <Picker.Item label="Selecione..." value="" />
+                    <Picker.Item label="Sim" value="Sim" />
+                    <Picker.Item label="Não" value="Não" />
+                  </Picker>
+                )}
               />
             </View>
+
             <View style={[styles.inputContainer, styles.flex1]}>
               <View style={styles.labelWithTooltip}>
                 <Text style={styles.label}>Código do Desastre</Text>
@@ -253,7 +294,7 @@ export default function FormularioIncendioScreen() {
             style={styles.exportButton}
             onPress={handleExportClick}
           >
-            <Text style={styles.exportButtonText}>Exportar PDF</Text>
+            <Text style={styles.exportButtonText}>Salvar Formulário</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

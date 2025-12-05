@@ -41,3 +41,10 @@ app-example
 # generated native folders
 /ios
 /android
+
+
+# arquivos md
+ESTRUTURA_OCORRENCIAS.md
+GUIA_IMPLEMENTACAO.md
+RELATORIO_ALTERACOES.md
+SUMARIO_EXECUTIVO.md 

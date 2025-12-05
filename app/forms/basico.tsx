@@ -4,15 +4,17 @@ import FormRow from "@/components/Forms/FormRow";
 import FormTextArea from "@/components/Forms/FormTextArea";
 import { basicoSchema } from "@/schema/basicoSchema";
 import { basicoStyles as styles } from "@/styles/basicoStyles";
+import { supabase } from "@/utils/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useForm } from "react-hook-form";
 import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function FormBasicoScreen() {
   const router = useRouter();
+  const { occurrenceId } = useLocalSearchParams();
   const { control, handleSubmit } = useForm({
     resolver: yupResolver(basicoSchema),
     defaultValues: {
@@ -58,7 +60,8 @@ export default function FormBasicoScreen() {
   });
 
   const onSubmit = (data: any) => {
-    console.log("Dados validados", data);
+    handleSaveToSupabase(data);
+
     Alert.alert("Sucesso", "Formulário validado e pronto para exportar!");
   };
 
@@ -66,12 +69,49 @@ export default function FormBasicoScreen() {
     handleSubmit(onSubmit)();
   };
 
-  const handleExport = () => {
-    Alert.alert(
-      "Exportar PDF",
-      "Funcionalidade de exportação em desenvolvimento",
-      [{ text: "OK" }]
-    );
+  const handleSaveToSupabase = async (data: any) => {
+    try {
+      const { error } = await supabase.from("basico_forms").insert({
+        ocorrencia_id: Number(occurrenceId),
+        ponto_base: data.pontoBase,
+        ome: data.ome,
+        viatura: data.viatura,
+        aviso: data.aviso,
+        data: data.data,
+        hora: data.hora,
+        forma_acionamento: data.formaAcionamento,
+        situacao: data.situacao,
+        logradouro: data.logradouro,
+        numero: data.numero,
+        bairro: data.bairro,
+        referencia: data.referencia,
+        coordenadas: data.coordenadas,
+        nome_solicitante: data.nomeSolicitante,
+        cpf_solicitante: data.cpfSolicitante,
+        telefone_solicitante: data.telefoneSolicitante,
+        natureza: data.natureza,
+        vitima_ilesa: data.vitimaIlesa,
+        vitima_leve: data.vitimaLeve,
+        vitima_grave: data.vitimaGrave,
+        vitima_obito: data.vitimaObito,
+        viaturas_apoio: data.viaturasApoio,
+        instituicoes_apoio: data.instituicoesApoio,
+        historico: data.historico,
+        posto: data.posto,
+        nome_guerra: data.nomeGuerra,
+        matricula: data.matricula,
+        data_visto: data.dataVisto,
+        assinatura: data.assinatura,
+      });
+
+      if (error) throw error;
+      Alert.alert("Sucesso", "Formulário salvo com sucesso!");
+
+      router.replace("/(tabs)/occurrences");
+    } catch (error) {
+      console.error("Erro ao salvar formulário:", error);
+      Alert.alert("Erro", "Não foi possível salvar o formulário.");
+    }
   };
 
   return (
