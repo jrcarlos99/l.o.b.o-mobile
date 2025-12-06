@@ -13,7 +13,6 @@ type Props = {
 export default function AvatarMenu({ visible, onClose }: Props) {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
-  const setUser = useAuthStore((s) => s.setUser);
 
   const handleLogout = async () => {
     await useAuthStore.getState().logout();

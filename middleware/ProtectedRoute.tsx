@@ -19,23 +19,18 @@ export default function ProtectedRoute({
   const hasNavigated = useRef(false);
 
   useEffect(() => {
-    //  Espera o RootLayout montar
     if (!rootNavigationState?.key) return;
-
-    // Espera Zustand hidratar
     if (!hydrated) return;
-
-    //  Evita navegação duplicada
     if (hasNavigated.current) return;
 
-    //  Sem usuário → login
+    // Sem usuário → login
     if (!user) {
       hasNavigated.current = true;
       router.replace("/login");
       return;
     }
 
-    //  Sem permissão → erro-permissao
+    // Sem permissão → erro-permissao
     if (allowedRoles && !allowedRoles.includes(user.perfil)) {
       hasNavigated.current = true;
       router.replace("/erro-permissao");
@@ -43,10 +38,10 @@ export default function ProtectedRoute({
     }
   }, [user, allowedRoles, hydrated, rootNavigationState]);
 
-  //  Enquanto não estiver tudo pronto, não renderiza nada
+  //  Enquanto não estiver pronto, não renderiza
   if (!rootNavigationState?.key || !hydrated) return null;
 
-  //  Sem usuário → não renderiza
+  // Sem usuário → não renderiza
   if (!user) return null;
 
   //  Sem permissão → não renderiza

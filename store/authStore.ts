@@ -13,7 +13,7 @@ export interface User {
 }
 
 interface AuthState {
-  _hasHydrated: any;
+  _hasHydrated: boolean;
   token: string | null;
   user: User | null;
 
@@ -33,13 +33,14 @@ export const useAuthStore = create<AuthState>((set) => ({
   setUser: (user) => set({ user }),
 
   initializeAuth: async () => {
-    const token = await AsyncStorage.getItem("token");
-    if (!token) {
-      set({ _hasHydrated: true });
-      return;
-    }
-
     try {
+      const token = await AsyncStorage.getItem("token");
+
+      if (!token) {
+        set({ _hasHydrated: true });
+        return;
+      }
+
       const profile = await getCurrentUser(token);
 
       set({
@@ -64,6 +65,6 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: async () => {
     await AsyncStorage.removeItem("token");
-    set({ token: null, user: null });
+    set({ token: null, user: null, _hasHydrated: true });
   },
 }));

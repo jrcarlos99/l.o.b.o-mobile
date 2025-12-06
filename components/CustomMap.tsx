@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { StyleSheet, View, ViewStyle } from "react-native";
 import { WebView } from "react-native-webview";
 
@@ -18,51 +18,50 @@ type Props = {
 };
 
 export default function CustomMap({ occurrences, style }: Props) {
-  const statusColors: Record<string, string> = {
-    PENDENTE: "red",
-    CONCLUIDO: "green",
-    EM_ANDAMENTO: "orange",
-    CANCELADO: "gray",
-    ABERTA: "blue",
-  };
+  const html = useMemo(() => {
+    const statusColors: Record<string, string> = {
+      PENDENTE: "red",
+      CONCLUIDO: "green",
+      EM_ANDAMENTO: "orange",
+      CANCELADO: "gray",
+      ABERTA: "blue",
+    };
 
-  // ✅ Garante que não quebra se status vier undefined
-  const markersJS = occurrences
-    .filter((occ) => occ.latitude && occ.longitude) // ✅ evita markers inválidos
-    .map((occ) => {
-      const color = statusColors[(occ.status || "").toUpperCase()] || "blue";
+    const markersJS = occurrences
+      .filter((occ) => occ.latitude && occ.longitude)
+      .map((occ) => {
+        const color = statusColors[(occ.status || "").toUpperCase()] || "blue";
 
-      const popup = `
-        <b>${occ.title || "Ocorrência"}</b><br/>
-        Tipo: ${occ.tipo || "N/A"}<br/>
-        Status: ${occ.status || "N/A"}<br/>
-        Cidade: ${occ.cidade || "N/A"}
-      `;
+        const popup = `
+          <b>${occ.title || "Ocorrência"}</b><br/>
+          Tipo: ${occ.tipo || "N/A"}<br/>
+          Status: ${occ.status || "N/A"}<br/>
+          Cidade: ${occ.cidade || "N/A"}
+        `;
 
-      return `
-        var marker = L.circleMarker([${occ.latitude}, ${occ.longitude}], {
-          radius: 8,
-          color: "${color}",
-          fillColor: "${color}",
-          fillOpacity: 0.8
-        }).bindPopup(${JSON.stringify(popup)});
-        markers.addLayer(marker);
-      `;
-    })
-    .join("\n");
+        return `
+          var marker = L.circleMarker([${occ.latitude}, ${occ.longitude}], {
+            radius: 8,
+            color: "${color}",
+            fillColor: "${color}",
+            fillOpacity: 0.8
+          }).bindPopup(${JSON.stringify(popup)});
+          markers.addLayer(marker);
+        `;
+      })
+      .join("\n");
 
-  // ✅ Ajuste seguro para bounds
-  const boundsJS =
-    occurrences.length > 0
-      ? `
-      var bounds = L.latLngBounds([
-        ${occurrences.map((o) => `[${o.latitude}, ${o.longitude}]`).join(",")}
-      ]);
-      map.flyToBounds(bounds, { padding: [50, 50], duration: 1.5 });
-    `
-      : "";
+    const boundsJS =
+      occurrences.length > 0
+        ? `
+        var bounds = L.latLngBounds([
+          ${occurrences.map((o) => `[${o.latitude}, ${o.longitude}]`).join(",")}
+        ]);
+        map.flyToBounds(bounds, { padding: [50, 50], duration: 1.5 });
+      `
+        : "";
 
-  const html = `
+    return `
 <!DOCTYPE html>
 <html>
 <head>
@@ -100,6 +99,7 @@ export default function CustomMap({ occurrences, style }: Props) {
 </body>
 </html>
 `;
+  }, [occurrences]);
 
   return (
     <View style={[styles.container, style]}>

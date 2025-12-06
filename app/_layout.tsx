@@ -31,41 +31,43 @@ export default function RootLayout() {
   const token = useAuthStore((s) => s.token);
   const hydrated = useAuthStore((s) => s._hasHydrated);
 
-  //  1. Carrega token ao abrir o app
+  //  Carrega token ao abrir o app
   useEffect(() => {
     initializeAuth();
   }, []);
 
-  //  2. Aguarda Zustand hidratar + RootLayout montar
+  // Aguarda Zustand + RootLayout
   const isReady = rootNavigationState?.key != null && hydrated;
 
-  //  Flag para evitar navegação duplicada
   const hasNavigated = useRef(false);
 
   useEffect(() => {
     if (!isReady) return;
 
-    const isAuthRoute =
-      segments[0] === "login" ||
-      segments[0] === "recuperar-senha" ||
-      segments[0] === "codigo-acesso" ||
-      segments[0] === "face-id";
+    const current = segments[0] ?? "";
 
-    //  Evita navegação repetida
+    const isAuthRoute =
+      current === "login" ||
+      current === "recuperar-senha" ||
+      current === "codigo-acesso" ||
+      current === "face-id";
+
     if (hasNavigated.current) return;
 
+    //  Sem token → login
     if (!token && !isAuthRoute) {
       hasNavigated.current = true;
       router.replace("/login");
       return;
     }
 
+    // ✅ Com token → redireciona para tabs
     if (token && isAuthRoute) {
       hasNavigated.current = true;
       router.replace("/(tabs)/occurrences");
       return;
     }
-  }, [isReady, token]); //
+  }, [isReady, token, segments]);
 
   return (
     <SafeAreaProvider>

@@ -1,3 +1,4 @@
+// services/dashboard.ts
 import { OccurrenceFilters } from "@/types/OccurrenceFilters";
 import axios from "axios";
 
@@ -7,26 +8,34 @@ export async function fetchDashboardStats(
   token: string,
   filters: OccurrenceFilters
 ) {
-  try {
-    const now = new Date();
-    const start =
-      filters.dataInicio ?? new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const end = filters.dataFim ?? now;
+  const params: Record<string, any> = {};
 
+  if (filters.dataInicio) {
+    params.dataInicio = filters.dataInicio.toISOString().split("T")[0];
+  }
+  if (filters.dataFim) {
+    params.dataFim = filters.dataFim.toISOString().split("T")[0];
+  }
+
+  if (filters.regiao) {
+    params.regiao = filters.regiao as any;
+  }
+
+  try {
     const response = await axios.get(`${API_BASE_URL}/dashboard`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      params: {
-        dataInicio: start.toISOString().split("T")[0],
-        dataFim: end.toISOString().split("T")[0],
-        regiao: filters.regiao || undefined, // envia região apenas se existir
-      },
+      headers: { Authorization: `Bearer ${token}` },
+      params,
     });
 
     return response.data;
-  } catch (error) {
-    console.error("Erro ao buscar estatísticas do dashboard:", error);
+  } catch (error: any) {
+    console.error("DASHBOARD 403 DEBUG:", {
+      url: `${API_BASE_URL}/dashboard`,
+      status: error?.response?.status,
+      data: error?.response?.data,
+      params: error?.config?.params,
+      headers: error?.config?.headers,
+    });
     throw error;
   }
 }

@@ -1,6 +1,5 @@
 import { useAuthStore } from "@/store/authStore";
 import { loginStyles as styles } from "@/styles/loginStyles";
-import { supabase } from "@/utils/supabase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -18,7 +17,7 @@ import * as yup from "yup";
 import AuthInput from "../components/AuthInput";
 import PrimaryButton from "../components/PrimaryButton";
 import { colors } from "../constants/colors";
-import { login } from "../services/auth";
+import { getCurrentUser, login } from "../services/auth";
 
 const loginSchema = yup.object({
   email: yup.string().email("Email inválido").required("Email é obrigatório"),
@@ -42,20 +41,30 @@ export default function Login() {
   const handleLogin = async () => {
     try {
       await loginSchema.validate({ email, password });
-
       setLoading(true);
 
+      // 1. Login → retorna token
       const token = await login(email, password);
+
+      // 2. Salva token
       await AsyncStorage.setItem("token", token);
       setToken(token);
 
-      supabase.auth.setSession({
-        access_token: token,
-        refresh_token: token,
+      // 3. Busca o usuário autenticado
+      const profile = await getCurrentUser(token);
+
+      // 4. Salva o usuário no Zustand
+      setUser({
+        id: profile.id,
+        nomeCompleto: profile.nomeCompleto,
+        email: profile.email,
+        perfil: profile.perfil,
+        regiao: profile.regiao,
+        regiaoAutorizada: profile.regiaoAutorizada,
+        avatar_url: profile.avatar_url,
       });
 
-      await useAuthStore.getState().initializeAuth();
-
+      // 5. Navega para as tabs
       router.replace("/(tabs)/occurrences");
     } catch (error: any) {
       Alert.alert("Erro", error.message || "Email ou senha inválidos.");

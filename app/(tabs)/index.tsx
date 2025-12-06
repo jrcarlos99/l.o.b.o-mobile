@@ -1,3 +1,4 @@
+// app/(tabs)/index.tsx
 import CustomMap from "@/components/CustomMap";
 import DashboardCarousel from "@/components/DashboardCarroussel";
 import HeaderWithFilters from "@/components/Header/HeaderWithFilters";
@@ -44,7 +45,6 @@ export default function Index() {
   const insets = useSafeAreaInsets();
   const customBottomPadding = insets.bottom + 75 + 10;
 
-  // ✅ processStats agora é useCallback para evitar recriação desnecessária
   const processStats = useCallback(
     (stats: any) => {
       const regiaoColors = [
@@ -68,7 +68,6 @@ export default function Index() {
         datasets: [{ data: Object.values(stats.porStatus || {}) }],
       });
 
-      // ✅ ADMIN e CHEFE veem gráfico de regiões
       if (adminOrChefe) {
         const regiaoDataArray = Object.entries(stats.porRegiao || {}).map(
           ([name, population], i) => ({
@@ -98,18 +97,32 @@ export default function Index() {
     [adminOrChefe]
   );
 
-  // ✅ handleFilters corrigido e estável
   const handleFilters = useCallback(async () => {
     try {
-      if (!token) throw new Error("Token não encontrado");
+      if (!hydrated || !token) return;
 
-      // ✅ Busca estatísticas
-      const stats = await fetchDashboardStats(token, filters);
+      if (!filters.dataInicio || !filters.dataFim) {
+        console.warn("Filtros incompletos, ignorando chamada.");
+        return;
+      }
 
-      // ✅ ANALISTA só vê sua região
+      // ✅ Filtros efetivos
+      const effectiveFilters: OccurrenceFilters = { ...filters };
+
       if (!adminOrChefe) {
         const region = user?.regiaoAutorizada?.trim().toUpperCase();
+        if (region) {
+          effectiveFilters.regiao = region as any;
+        }
+      } else {
+        delete effectiveFilters.regiao;
+      }
 
+      // ✅ Dashboard
+      const stats = await fetchDashboardStats(token, effectiveFilters);
+
+      if (!adminOrChefe) {
+        const region = user?.regiaoAutorizada?.trim().toUpperCase();
         stats.porRegiao = region
           ? { [region]: stats.porRegiao?.[region] ?? 0 }
           : {};
@@ -117,8 +130,8 @@ export default function Index() {
 
       processStats(stats);
 
-      // ✅ Busca ocorrências
-      const occs = await fetchOccurrences(token, filters);
+      // ✅ Ocorrências
+      const occs = await fetchOccurrences(token, effectiveFilters);
 
       const mapped = Array.isArray(occs.content)
         ? occs.content.map((o: any) => ({
@@ -130,7 +143,6 @@ export default function Index() {
           }))
         : [];
 
-      // ✅ ADMIN e CHEFE veem tudo
       const filtered = adminOrChefe
         ? mapped
         : mapped.filter((o: Occurrence) => canAccessRegion(o.regiao ?? ""));
@@ -143,16 +155,34 @@ export default function Index() {
         "Servidor indisponível, não foi possível carregar estatísticas."
       );
     }
-  }, [filters, adminOrChefe, user, canAccessRegion, processStats, token]);
+  }, [
+    hydrated,
+    token,
+    filters,
+    adminOrChefe,
+    user,
+    canAccessRegion,
+    processStats,
+  ]);
 
-  // ✅ Agora só roda quando:
-  // - Zustand hidratou
-  // - Token existe
   useEffect(() => {
-    if (!hydrated) return;
-    if (!token) return;
+    if (!hydrated || !token) return;
+
+    if (!filters.dataInicio || !filters.dataFim) {
+      const now = new Date();
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+      setFilters({
+        ...filters,
+        dataInicio: filters.dataInicio ?? sevenDaysAgo,
+        dataFim: filters.dataFim ?? now,
+      });
+
+      return;
+    }
+
     handleFilters();
-  }, [hydrated, token, handleFilters]);
+  }, [hydrated, token, filters, handleFilters]);
 
   return (
     <ProtectedRoute>
@@ -223,7 +253,6 @@ export default function Index() {
                   title="Limpar filtros"
                   onPress={() => {
                     setFilters({});
-                    handleFilters();
                   }}
                   color="#6C2020"
                 />

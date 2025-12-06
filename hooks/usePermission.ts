@@ -1,27 +1,20 @@
 import { useAuthStore } from "@/store/authStore";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 
 export function usePermission() {
   const user = useAuthStore((s) => s.user);
 
   const hasRole = useCallback(
     (...roles: string[]) => {
-      return roles.includes(user?.perfil ?? "");
+      if (!user) return false;
+      return roles.includes(user.perfil);
     },
-    [user?.perfil]
+    [user]
   );
 
-  const isAdmin = useCallback(() => {
-    return user?.perfil === "ADMIN";
-  }, [user?.perfil]);
-
-  const isChefe = useCallback(() => {
-    return user?.perfil === "CHEFE";
-  }, [user?.perfil]);
-
-  const isAnalista = useCallback(() => {
-    return user?.perfil === "ANALISTA";
-  }, [user?.perfil]);
+  const isAdmin = useCallback(() => user?.perfil === "ADMIN", [user]);
+  const isChefe = useCallback(() => user?.perfil === "CHEFE", [user]);
+  const isAnalista = useCallback(() => user?.perfil === "ANALISTA", [user]);
 
   const canAccessRegion = useCallback(
     (regiao: string) => {
@@ -32,18 +25,15 @@ export function usePermission() {
 
       return user.perfil === "ADMIN" || userRegion === targetRegion;
     },
-    [user?.perfil, user?.regiaoAutorizada]
+    [user]
   );
 
-  return useMemo(
-    () => ({
-      user,
-      hasRole,
-      isAdmin,
-      isChefe,
-      isAnalista,
-      canAccessRegion,
-    }),
-    [user, hasRole, isAdmin, isChefe, isAnalista, canAccessRegion]
-  );
+  return {
+    user,
+    hasRole,
+    isAdmin,
+    isChefe,
+    isAnalista,
+    canAccessRegion,
+  };
 }

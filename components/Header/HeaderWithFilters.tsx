@@ -53,12 +53,11 @@ export default function HeaderWithFilters({
   const normalize = (value: string) =>
     ["todos", "tipo", "status", "regiao"].includes(value) ? undefined : value;
 
-  //  Força a região correta para quem não é admin
+  //  Força região correta para CHEFE/ANALISTA
   useEffect(() => {
     if (!isAdmin()) {
       const region = user?.regiaoAutorizada ?? "regiao";
 
-      // evita loop
       if (regionFilter !== region) {
         setRegionFilter(region);
       }
@@ -129,10 +128,7 @@ export default function HeaderWithFilters({
     onFiltersChange,
   ]);
 
-  // Evita loops e erros quando o usuário ainda não está carregado
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
   return (
     <View style={[styles.headerContainer, { paddingTop: insets.top }]}>
@@ -150,7 +146,7 @@ export default function HeaderWithFilters({
       <View style={styles.headerExtras}>
         <Text style={styles.headerText}>{title}</Text>
 
-        {/* Linha 1 de filtros */}
+        {/* Linha 1 */}
         <View style={styles.filtersRow}>
           <View style={styles.filterBox}>
             <Picker
@@ -185,9 +181,8 @@ export default function HeaderWithFilters({
           </View>
         </View>
 
-        {/* Linha 2 de filtros */}
+        {/* Linha 2 */}
         <View style={styles.filtersRow}>
-          {/*  Filtro de região só aparece para ADMIN */}
           {admin && (
             <View style={styles.filterBox}>
               <Picker
