@@ -8,6 +8,7 @@ import { SignatureSection } from "@/components/occurrences/SignatureSection";
 import { useOccurrencePickers } from "@/hooks/occurrences/useOccurrencePickers";
 import { useOccurrenceUploads } from "@/hooks/occurrences/useOccurrenceUploads";
 import useGPS from "@/hooks/useGPS";
+import ProtectedRoute from "@/middleware/ProtectedRoute";
 import { occurrenceCreateStyles as styles } from "@/styles/occurrenceCreateStyles";
 import { supabase } from "@/utils/supabase";
 import {
@@ -28,6 +29,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
 export default function CreateOccurrenceScreen() {
@@ -42,6 +44,8 @@ export default function CreateOccurrenceScreen() {
   const [submitting, setSubmitting] = useState(false);
 
   const { gps } = useGPS();
+  const insets = useSafeAreaInsets();
+  const customBottomPadding = insets.bottom + 75 + 10;
 
   const formik = useFormik<OccurrenceFormValues>({
     initialValues: {
@@ -126,8 +130,6 @@ export default function CreateOccurrenceScreen() {
             url_anexo: urlData.publicUrl,
             tipo: "ASSINATURA",
           });
-        } else {
-          console.error("Erro ao salvar assinatura:", error);
         }
       }
 
@@ -142,7 +144,6 @@ export default function CreateOccurrenceScreen() {
           pathname: "/occurrences/fluxo-de-ocorrencias",
           params: { occurrenceId },
         });
-        console.log("Redirecionando com ID:", occurrenceId);
       }, 1500);
     } catch (error) {
       console.error("Error submitting occurrence:", error);
@@ -166,101 +167,103 @@ export default function CreateOccurrenceScreen() {
 
   return (
     <>
-      <HeaderSection onBack={() => router.back()} />
+      <ProtectedRoute allowedRoles={["OPERADOR", "ANALISTA", "CHEFE", "ADMIN"]}>
+        <HeaderSection onBack={() => router.push("/(tabs)/occurrences")} />
 
-      {showSignatureModal && (
-        <Modal visible animationType="slide">
-          <View style={{ flex: 1 }}>
-            <TouchableOpacity
-              onPress={() => setShowSignatureModal(false)}
-              style={{ padding: 12 }}
-            >
-              <Text style={{ color: "red", fontSize: 16 }}>Fechar</Text>
-            </TouchableOpacity>
-            <SignaturePad
-              onOK={(sig) => {
-                setSignatureText(sig);
-                setShowSignatureModal(false);
-              }}
-              onClose={() => setShowSignatureModal(false)}
-            />
-          </View>
-        </Modal>
-      )}
+        {showSignatureModal && (
+          <Modal visible animationType="slide">
+            <View style={{ flex: 1 }}>
+              <TouchableOpacity
+                onPress={() => setShowSignatureModal(false)}
+                style={{ padding: 12 }}
+              >
+                <Text style={{ color: "red", fontSize: 16 }}>Fechar</Text>
+              </TouchableOpacity>
+              <SignaturePad
+                onOK={(sig) => {
+                  setSignatureText(sig);
+                  setShowSignatureModal(false);
+                }}
+                onClose={() => setShowSignatureModal(false)}
+              />
+            </View>
+          </Modal>
+        )}
 
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        {/*  FORM PRINCIPAL */}
-        <FormSection
-          formik={{
-            values: formik.values,
-            errors: formik.errors,
-            touched: formik.touched,
-            handleChange: formik.handleChange,
-            handleBlur: formik.handleBlur,
-            setFieldValue: formik.setFieldValue,
-          }}
-          viaturaItems={viaturaItems}
-          equipeItems={equipeItems}
-        />
-
-        {/*  LOCALIZAÇÃO (GPS) */}
-        <FormField label="Localização">
-          <LocationButton
-            onPress={() => {
-              if (gps?.lat && gps?.lon) {
-                const formatted = `Lat: ${gps.lat.toFixed(
-                  5
-                )}, Lon: ${gps.lon.toFixed(5)}${
-                  gps.accuracy ? ` (acc ${gps.accuracy.toFixed(1)}m)` : ""
-                }`;
-                formik.setFieldValue("address", formatted);
-              } else {
-                Alert.alert("GPS", "Coordenadas não disponíveis.");
-              }
-            }}
-          />
-
-          <TextInput
-            placeholder="Endereço (opcional)"
-            style={[styles.input, { marginTop: 8 }]}
-            value={formik.values.address}
-            onChangeText={(text) => formik.setFieldValue("address", text)}
-          />
-        </FormField>
-
-        {/*  IMAGENS */}
-        <ImageSection
-          images={images}
-          onAddImage={handleAddImage}
-          onRemoveImage={handleRemoveImage}
-        />
-
-        {/* ASSINATURA */}
-        <SignatureSection
-          signatureText={signatureText}
-          onPress={() => setShowSignatureModal(true)}
-        />
-
-        {/*  BOTÃO SALVAR */}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={[
-              styles.submitButton,
-              !formik.isValid || submitting
-                ? styles.submitButtonDisabled
-                : null,
-            ]}
-            onPress={() => formik.handleSubmit()}
-            disabled={!formik.isValid || submitting}
+        <View style={{ flex: 1, paddingBottom: customBottomPadding }}>
+          <ScrollView
+            style={styles.container}
+            showsVerticalScrollIndicator={false}
           >
-            {submitting ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.submitButtonText}>Salvar Ocorrência</Text>
-            )}
-          </TouchableOpacity>
+            <FormSection
+              formik={{
+                values: formik.values,
+                errors: formik.errors,
+                touched: formik.touched,
+                handleChange: formik.handleChange,
+                handleBlur: formik.handleBlur,
+                setFieldValue: formik.setFieldValue,
+              }}
+              viaturaItems={viaturaItems}
+              equipeItems={equipeItems}
+            />
+
+            <FormField label="Localização">
+              <LocationButton
+                onPress={() => {
+                  if (gps?.lat && gps?.lon) {
+                    const formatted = `Lat: ${gps.lat.toFixed(
+                      5
+                    )}, Lon: ${gps.lon.toFixed(5)}${
+                      gps.accuracy ? ` (acc ${gps.accuracy.toFixed(1)}m)` : ""
+                    }`;
+                    formik.setFieldValue("address", formatted);
+                  } else {
+                    Alert.alert("GPS", "Coordenadas não disponíveis.");
+                  }
+                }}
+              />
+
+              <TextInput
+                placeholder="Endereço (opcional)"
+                style={[styles.input, { marginTop: 8 }]}
+                value={formik.values.address}
+                onChangeText={(text) => formik.setFieldValue("address", text)}
+              />
+            </FormField>
+
+            <ImageSection
+              images={images}
+              onAddImage={handleAddImage}
+              onRemoveImage={handleRemoveImage}
+            />
+
+            <SignatureSection
+              signatureText={signatureText}
+              onPress={() => setShowSignatureModal(true)}
+            />
+
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.submitButton,
+                  !formik.isValid || submitting
+                    ? styles.submitButtonDisabled
+                    : null,
+                ]}
+                onPress={() => formik.handleSubmit()}
+                disabled={!formik.isValid || submitting}
+              >
+                {submitting ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.submitButtonText}>Salvar Ocorrência</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
         </View>
-      </ScrollView>
+      </ProtectedRoute>
 
       <Toast />
     </>

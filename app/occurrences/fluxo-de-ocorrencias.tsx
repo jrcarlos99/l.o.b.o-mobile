@@ -1,17 +1,27 @@
 import { supabase } from "@/utils/supabase";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import {
+  useLocalSearchParams,
+  useRootNavigationState,
+  useRouter,
+} from "expo-router";
+import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Text, View } from "react-native";
 
 export default function FluxoDeOcorrencia() {
   const router = useRouter();
+  const rootNavigationState = useRootNavigationState();
+  const hasNavigated = useRef(false);
+
   const { occurrenceId } = useLocalSearchParams();
   const idNum = Number(occurrenceId);
+
   const [loading, setLoading] = useState(true);
-  const [occurrence, setOccurrence] = useState<any>(null);
 
   useEffect(() => {
     const loadOccurrence = async () => {
+      //  Espera o RootLayout montar
+      if (!rootNavigationState?.key) return;
+
       if (!occurrenceId || isNaN(idNum)) {
         setLoading(false);
         return;
@@ -26,22 +36,25 @@ export default function FluxoDeOcorrencia() {
 
         if (error) throw error;
 
-        setOccurrence(data);
+        if (hasNavigated.current) return;
 
-        //  Redireciona automaticamente para o formulário correto
-        if (data.tipo.toLowerCase() === "basico") {
-          router.push({
+        const tipo = data.tipo?.toLowerCase();
+
+        if (tipo === "basico") {
+          hasNavigated.current = true;
+          router.replace({
             pathname: "/forms/basico",
             params: { occurrenceId },
           });
-        }
-
-        // Outros tipos no futuro:
-        if (data.tipo.toLowerCase() === "incendio") {
-          router.push({
+        } else if (tipo === "incendio") {
+          hasNavigated.current = true;
+          router.replace({
             pathname: "/forms/incendio",
             params: { occurrenceId },
           });
+        } else {
+          //  Fallback
+          console.warn("Tipo de ocorrência não reconhecido:", tipo);
         }
       } catch (err) {
         console.error("Erro ao carregar ocorrência:", err);
@@ -51,7 +64,7 @@ export default function FluxoDeOcorrencia() {
     };
 
     loadOccurrence();
-  }, [occurrenceId, idNum, router]);
+  }, [occurrenceId, idNum, rootNavigationState]);
 
   if (loading) {
     return (

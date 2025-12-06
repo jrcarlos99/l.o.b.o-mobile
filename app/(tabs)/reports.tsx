@@ -1,10 +1,14 @@
 import AvatarMenu from "@/components/Header/AvatarMenu";
 import HeaderSimple from "@/components/Header/HeaderSimple";
-import { useUser } from "@/context/UserContext";
+import ProtectedRoute from "@/middleware/ProtectedRoute";
+import { useAuthStore } from "@/store/authStore";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
 // Dados dos tipos de relatórios
 const reportTypes = [
@@ -45,13 +49,14 @@ const reportTypes = [
 ];
 
 export default function ReportsScreen() {
-  const { user } = useUser();
+  const user = useAuthStore((s) => s.user);
   const [formattedDate, setFormattedDate] = useState("");
   const [avatarMenuVisible, setAvatarMenuVisible] = useState(false);
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const customBottomPadding = insets.bottom + 75 + 10;
 
   useEffect(() => {
-    // Formatar data atual
     const today = new Date();
     const day = String(today.getDate()).padStart(2, "0");
     const month = String(today.getMonth() + 1).padStart(2, "0");
@@ -59,63 +64,59 @@ export default function ReportsScreen() {
     setFormattedDate(`${day}/${month}/${year}`);
   }, []);
 
-  const handleDatePress = () => {
-    console.log("Date pressed");
-  };
-
-  const handleNotificationsPress = () => {
-    console.log("Notifications pressed");
-  };
-
   const handleReportTypePress = (route: string) => {
-    // @ts-ignore
     router.push(route as any);
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <HeaderSimple
-          title="Relatórios"
-          avatarUrl={user?.avatar_url ?? "https://placehold.co/100x100/png"}
-          formattedDate={formattedDate}
-          onDatePress={handleDatePress}
-          onNotificationsPress={handleNotificationsPress}
-          onAvatarPress={() => setAvatarMenuVisible(true)}
-          onLogoPress={() => router.push("/")}
-        />
+    <ProtectedRoute allowedRoles={["ANALISTA", "CHEFE", "ADMIN"]}>
+      <View style={{ flex: 1, paddingBottom: customBottomPadding }}>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.container}>
+            <HeaderSimple
+              title="Relatórios"
+              avatarUrl={user?.avatar_url ?? "https://placehold.co/100x100/png"}
+              formattedDate={formattedDate}
+              onDatePress={() => {}}
+              onNotificationsPress={() => {}}
+              onAvatarPress={() => setAvatarMenuVisible(true)}
+              onLogoPress={() => router.push("/")}
+            />
 
-        <ScrollView
-          style={styles.scrollContainer}
-          contentContainerStyle={styles.contentContainer}
-          showsVerticalScrollIndicator={false}
-        >
-          <Text style={styles.subtitle}>
-            Selecione o tipo de formulário que deseja preencher:
-          </Text>
+            <ScrollView
+              style={styles.scrollContainer}
+              contentContainerStyle={styles.contentContainer}
+              showsVerticalScrollIndicator={false}
+            >
+              <Text style={styles.subtitle}>
+                Selecione o tipo de formulário que deseja preencher:
+              </Text>
 
-          <View style={styles.grid}>
-            {reportTypes.map((item, index) => (
-              <Pressable
-                key={item.id}
-                style={[
-                  styles.gridItem,
-                  { backgroundColor: item.color },
-                  index === reportTypes.length - 1 && styles.fullWidthItem,
-                ]}
-                onPress={() => handleReportTypePress(item.route)}
-              >
-                <Text style={styles.gridText}>{item.title}</Text>
-              </Pressable>
-            ))}
+              <View style={styles.grid}>
+                {reportTypes.map((item, index) => (
+                  <Pressable
+                    key={item.id}
+                    style={[
+                      styles.gridItem,
+                      { backgroundColor: item.color },
+                      index === reportTypes.length - 1 && styles.fullWidthItem,
+                    ]}
+                    onPress={() => handleReportTypePress(item.route)}
+                  >
+                    <Text style={styles.gridText}>{item.title}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </ScrollView>
           </View>
-        </ScrollView>
+
+          <AvatarMenu
+            visible={avatarMenuVisible}
+            onClose={() => setAvatarMenuVisible(false)}
+          />
+        </SafeAreaView>
       </View>
-      <AvatarMenu
-        visible={avatarMenuVisible}
-        onClose={() => setAvatarMenuVisible(false)}
-      />
-    </SafeAreaView>
+    </ProtectedRoute>
   );
 }
 
@@ -155,10 +156,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     minHeight: 70,
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 3,

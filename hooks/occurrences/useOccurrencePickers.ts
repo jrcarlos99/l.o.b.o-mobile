@@ -2,23 +2,29 @@ import { supabase } from "@/utils/supabase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
 
+interface ViaturaItem {
+  id: string;
+  nome: string;
+}
+
+interface EquipeItem {
+  id: string;
+  nome: string;
+}
+
 export const useOccurrencePickers = () => {
   const [loadingPickers, setLoadingPickers] = useState(true);
-  const [viaturaItems, setViaturaItems] = useState<
-    { id: string; nome: string }[]
-  >([]);
-  const [equipeItems, setEquipeItems] = useState<
-    { id: string; nome: string }[]
-  >([]);
+  const [viaturaItems, setViaturaItems] = useState<ViaturaItem[]>([]);
+  const [equipeItems, setEquipeItems] = useState<EquipeItem[]>([]);
 
   useEffect(() => {
     const loadPickersData = async () => {
       try {
         setLoadingPickers(true);
-        const token = await AsyncStorage.getItem("token");
+        const token = await AsyncStorage.getItem("authToken");
 
         if (!token) {
-          console.warn("Não foi possível obter o token de autenticação.");
+          console.warn("No auth token found");
           setLoadingPickers(false);
           return;
         }
@@ -28,10 +34,14 @@ export const useOccurrencePickers = () => {
           fetchEquipes(token),
         ]);
 
-        if (viaturaRes) setViaturaItems(viaturaRes);
-        if (equipeRes) setEquipeItems(equipeRes);
+        if (viaturaRes) {
+          setViaturaItems(viaturaRes);
+        }
+        if (equipeRes) {
+          setEquipeItems(equipeRes);
+        }
       } catch (error) {
-        console.error("Erro ao carregar dados dos pickers:", error);
+        console.error("Error loading pickers data:", error);
       } finally {
         setLoadingPickers(false);
       }
@@ -40,44 +50,28 @@ export const useOccurrencePickers = () => {
     loadPickersData();
   }, []);
 
-  const fetchViaturas = async (
-    token: string
-  ): Promise<{ id: string; nome: string }[]> => {
+  const fetchViaturas = async (token: string): Promise<ViaturaItem[]> => {
     try {
       const { data, error } = await supabase
-        .from("viatura")
-        .select("id, tipo, descricao");
+        .from("viaturas")
+        .select("id, nome");
 
       if (error) throw error;
-
-      return (
-        data?.map((v) => ({
-          id: String(v.id),
-          nome: `${v.tipo} - ${v.descricao}`,
-        })) || []
-      );
+      return data || [];
     } catch (error) {
-      console.error("Erro ao buscar viaturas:", error);
+      console.error("Error fetching viaturas:", error);
       return [];
     }
   };
 
-  const fetchEquipes = async (
-    token: string
-  ): Promise<{ id: string; nome: string }[]> => {
+  const fetchEquipes = async (token: string): Promise<EquipeItem[]> => {
     try {
-      const { data, error } = await supabase.from("equipe").select("id, nome");
+      const { data, error } = await supabase.from("equipes").select("id, nome");
 
       if (error) throw error;
-
-      return (
-        data?.map((e) => ({
-          id: String(e.id),
-          nome: e.nome,
-        })) || []
-      );
+      return data || [];
     } catch (error) {
-      console.error("Erro ao buscar equipes:", error);
+      console.error("Error fetching equipes:", error);
       return [];
     }
   };

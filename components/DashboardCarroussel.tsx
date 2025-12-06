@@ -41,10 +41,14 @@ export default function DashboardCarousel({
       title: "Por Tipo",
       content: <CustomBarChart data={tipoData} color="#8E24AA" />,
     },
-    {
-      title: "Por Região",
-      content: <CustomPieChart data={regiaoData} />,
-    },
+    ...(regiaoData
+      ? [
+          {
+            title: "Por Região",
+            content: <CustomPieChart data={regiaoData} />,
+          },
+        ]
+      : []),
     {
       title: "Por Turno",
       content: <CustomPieChart data={turnoData} />,

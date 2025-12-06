@@ -1,9 +1,29 @@
-import { Dimensions } from "react-native";
+import { Dimensions, Text, View } from "react-native";
 import { BarChart } from "react-native-chart-kit";
 
 const screenWidth = Dimensions.get("window").width;
 
 export function CustomTotalChart({ total }: { total: number }) {
+  //  Fallback
+  if (total === undefined || total === null) {
+    return (
+      <View
+        style={{
+          width: screenWidth - 64,
+          height: 200,
+          borderRadius: 12,
+          backgroundColor: "#fff",
+          justifyContent: "center",
+          alignItems: "center",
+          borderWidth: 1,
+          borderColor: "#ddd",
+        }}
+      >
+        <Text style={{ color: "#666" }}>Sem dados para exibir</Text>
+      </View>
+    );
+  }
+
   const chartConfig = {
     backgroundGradientFrom: "#fff",
     backgroundGradientTo: "#fff",

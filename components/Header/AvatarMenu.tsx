@@ -1,6 +1,5 @@
 import { colors } from "@/constants/colors";
-import { useUser } from "@/context/UserContext";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAuthStore } from "@/store/authStore";
 import { useRouter } from "expo-router";
 import React from "react";
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -13,10 +12,11 @@ type Props = {
 
 export default function AvatarMenu({ visible, onClose }: Props) {
   const router = useRouter();
-  const { user, setUser } = useUser();
+  const user = useAuthStore((s) => s.user);
+  const setUser = useAuthStore((s) => s.setUser);
 
   const handleLogout = async () => {
-    await AsyncStorage.removeItem("token");
+    await useAuthStore.getState().logout();
     onClose();
     router.replace("/login");
   };
@@ -31,10 +31,9 @@ export default function AvatarMenu({ visible, onClose }: Props) {
       console.log("Nenhum usuário logado");
       return;
     }
-    const newUrl = await alterarFotoPerfil(user.id);
+    const newUrl = await alterarFotoPerfil(String(user.id));
     if (newUrl) {
       console.log("Novo avatar:", newUrl);
-      setUser({ ...user, avatar_url: newUrl });
     } else {
       console.log("Upload falhou ou cancelado");
     }

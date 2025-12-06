@@ -1,4 +1,4 @@
-import { Dimensions } from "react-native";
+import { Dimensions, Text, View } from "react-native";
 import { BarChart } from "react-native-chart-kit";
 
 const screenWidth = Dimensions.get("window").width;
@@ -10,6 +10,26 @@ export function CustomBarChart({
   data: { labels: string[]; datasets: { data: number[] }[] };
   color?: string;
 }) {
+  if (!data || data.labels.length === 0) {
+    return (
+      <View
+        style={{
+          width: screenWidth - 32,
+          height: 200,
+          borderRadius: 12,
+          backgroundColor: "#fff",
+          justifyContent: "center",
+          alignItems: "center",
+          borderWidth: 1,
+          borderColor: "#ddd",
+          marginBottom: 16,
+        }}
+      >
+        <Text style={{ color: "#666" }}>Sem dados para exibir</Text>
+      </View>
+    );
+  }
+
   const chartConfig = {
     backgroundGradientFrom: "#fff",
     backgroundGradientTo: "#fff",

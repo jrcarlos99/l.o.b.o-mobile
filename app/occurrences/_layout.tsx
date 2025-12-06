@@ -7,7 +7,11 @@ export default function OccurrencesLayout() {
         headerShown: false,
       }}
     >
+      {/* Tela de criação de ocorrência */}
       <Stack.Screen name="create" />
+
+      {/* Tela de fluxo após criar ocorrência */}
+      <Stack.Screen name="fluxo-de-ocorrencias" />
     </Stack>
   );
 }

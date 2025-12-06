@@ -26,15 +26,19 @@ export default function CustomMap({ occurrences, style }: Props) {
     ABERTA: "blue",
   };
 
+  // ✅ Garante que não quebra se status vier undefined
   const markersJS = occurrences
+    .filter((occ) => occ.latitude && occ.longitude) // ✅ evita markers inválidos
     .map((occ) => {
-      const color = statusColors[occ.status?.toUpperCase() || ""] || "blue";
+      const color = statusColors[(occ.status || "").toUpperCase()] || "blue";
+
       const popup = `
         <b>${occ.title || "Ocorrência"}</b><br/>
         Tipo: ${occ.tipo || "N/A"}<br/>
         Status: ${occ.status || "N/A"}<br/>
         Cidade: ${occ.cidade || "N/A"}
       `;
+
       return `
         var marker = L.circleMarker([${occ.latitude}, ${occ.longitude}], {
           radius: 8,
@@ -47,14 +51,16 @@ export default function CustomMap({ occurrences, style }: Props) {
     })
     .join("\n");
 
-  const boundsJS = occurrences.length
-    ? `
+  // ✅ Ajuste seguro para bounds
+  const boundsJS =
+    occurrences.length > 0
+      ? `
       var bounds = L.latLngBounds([
         ${occurrences.map((o) => `[${o.latitude}, ${o.longitude}]`).join(",")}
       ]);
       map.flyToBounds(bounds, { padding: [50, 50], duration: 1.5 });
     `
-    : "";
+      : "";
 
   const html = `
 <!DOCTYPE html>
@@ -76,14 +82,18 @@ export default function CustomMap({ occurrences, style }: Props) {
   <script>
     document.addEventListener("DOMContentLoaded", function() {
       var map = L.map('map').setView([-8.0476, -34.877], 10);
+
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '© OpenStreetMap contributors'
       }).addTo(map);
 
       var markers = L.markerClusterGroup();
+
       ${markersJS}
+
       map.addLayer(markers);
+
       ${boundsJS}
     });
   </script>

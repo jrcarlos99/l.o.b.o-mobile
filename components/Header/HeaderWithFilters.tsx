@@ -1,4 +1,5 @@
 import { OccurrenceFilters } from "@/types/OccurrenceFilters";
+import { normalizeRegionFilter } from "@/utils/normalizeRegionFilter";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
 import { useEffect, useState } from "react";
@@ -8,7 +9,8 @@ import AvatarMenu from "./AvatarMenu";
 import HeaderBase from "./HeaderBase";
 import { styles } from "./style";
 
-import { useUser } from "@/context/UserContext";
+import { usePermission } from "@/hooks/usePermission";
+import { useAuthStore } from "@/store/authStore";
 
 import { useRouter } from "expo-router";
 
@@ -32,7 +34,10 @@ export default function HeaderWithFilters({
   const [avatarMenuVisible, setAvatarMenuVisible] = useState(false);
 
   const router = useRouter();
-  const { user } = useUser();
+  const user = useAuthStore((s) => s.user);
+  const { isAdmin } = usePermission();
+
+  const insets = useSafeAreaInsets();
 
   const formattedDate = date.toLocaleDateString("pt-BR", {
     day: "2-digit",
@@ -45,11 +50,25 @@ export default function HeaderWithFilters({
     if (selectedDate) setDate(selectedDate);
   };
 
-  const insets = useSafeAreaInsets();
-
   const normalize = (value: string) =>
     ["todos", "tipo", "status", "regiao"].includes(value) ? undefined : value;
 
+  //  Força a região correta para quem não é admin
+  useEffect(() => {
+    if (!isAdmin()) {
+      const region = user?.regiaoAutorizada ?? "regiao";
+
+      // evita loop
+      if (regionFilter !== region) {
+        setRegionFilter(region);
+      }
+    }
+  }, [isAdmin, user, regionFilter]);
+
+  const admin = isAdmin();
+  const userRegion = user?.regiaoAutorizada;
+
+  //  Aplica filtros sempre que algo mudar
   useEffect(() => {
     const now = new Date();
     let dataInicio: Date | undefined;
@@ -60,18 +79,21 @@ export default function HeaderWithFilters({
         dataInicio = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         dataFim = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         break;
+
       case "ontem":
         const ontem = new Date(now);
         ontem.setDate(now.getDate() - 1);
         dataInicio = ontem;
         dataFim = ontem;
         break;
+
       case "ultimos_7_dias":
         const seteDias = new Date(now);
         seteDias.setDate(now.getDate() - 7);
         dataInicio = seteDias;
         dataFim = now;
         break;
+
       case "mes_passado":
         const primeiroDiaMesPassado = new Date(
           now.getFullYear(),
@@ -90,12 +112,27 @@ export default function HeaderWithFilters({
 
     onFiltersChange({
       status: normalize(statusFilter),
-      regiao: normalize(regionFilter) as OccurrenceFilters["regiao"],
+      regiao: admin
+        ? normalizeRegionFilter(regionFilter)
+        : normalizeRegionFilter(userRegion),
       tipo: normalize(typeFilter) as OccurrenceFilters["tipo"],
       dataInicio,
       dataFim,
     });
-  }, [statusFilter, regionFilter, typeFilter, periodFilter, onFiltersChange]);
+  }, [
+    statusFilter,
+    regionFilter,
+    typeFilter,
+    periodFilter,
+    admin,
+    userRegion,
+    onFiltersChange,
+  ]);
+
+  // Evita loops e erros quando o usuário ainda não está carregado
+  if (!user) {
+    return null;
+  }
 
   return (
     <View style={[styles.headerContainer, { paddingTop: insets.top }]}>
@@ -113,7 +150,7 @@ export default function HeaderWithFilters({
       <View style={styles.headerExtras}>
         <Text style={styles.headerText}>{title}</Text>
 
-        {/* Filtros */}
+        {/* Linha 1 de filtros */}
         <View style={styles.filtersRow}>
           <View style={styles.filterBox}>
             <Picker
@@ -148,20 +185,24 @@ export default function HeaderWithFilters({
           </View>
         </View>
 
+        {/* Linha 2 de filtros */}
         <View style={styles.filtersRow}>
-          <View style={styles.filterBox}>
-            <Picker
-              selectedValue={regionFilter}
-              onValueChange={setRegionFilter}
-            >
-              <Picker.Item label="Região" value="regiao" />
-              <Picker.Item label="Todas" value="todos" />
-              <Picker.Item label="RMR" value="RMR" />
-              <Picker.Item label="Agreste" value="AGRE" />
-              <Picker.Item label="Zona da Mata" value="ZDMT" />
-              <Picker.Item label="Sertão" value="SERT" />
-            </Picker>
-          </View>
+          {/*  Filtro de região só aparece para ADMIN */}
+          {admin && (
+            <View style={styles.filterBox}>
+              <Picker
+                selectedValue={regionFilter}
+                onValueChange={setRegionFilter}
+              >
+                <Picker.Item label="Região" value="regiao" />
+                <Picker.Item label="Todas" value="todos" />
+                <Picker.Item label="RMR" value="RMR" />
+                <Picker.Item label="Agreste" value="AGRE" />
+                <Picker.Item label="Zona da Mata" value="ZDMT" />
+                <Picker.Item label="Sertão" value="SERT" />
+              </Picker>
+            </View>
+          )}
 
           <View style={styles.filterBox}>
             <Picker

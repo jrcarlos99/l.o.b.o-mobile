@@ -2,16 +2,19 @@ import HeaderWithFilters from "@/components/Header/HeaderWithFilters";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import { OccurrencesList } from "@/components/occurrence/occurrences/OccurrencesList";
 import OccurrenceDetailsModal from "@/components/OccurrenceDetailsModal";
-import { useUser } from "@/context/UserContext";
+import { usePermission } from "@/hooks/usePermission";
+import ProtectedRoute from "@/middleware/ProtectedRoute";
 import { fetchOccurrences } from "@/services/occurrences";
+import { useAuthStore } from "@/store/authStore";
 import { OccurrenceFilters } from "@/types/OccurrenceFilters";
 import { Occurrence } from "@/types/OccurrenceType";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function OccurrencesPage() {
-  const { user } = useUser();
+  const user = useAuthStore((s) => s.user);
   const [occurrences, setOccurrences] = useState<Occurrence[]>([]);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -21,22 +24,33 @@ export default function OccurrencesPage() {
     useState<Occurrence | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
 
+  const { isAdmin, isChefe, canAccessRegion } = usePermission();
+  const adminOrChefe = isAdmin() || isChefe();
+
+  const insets = useSafeAreaInsets();
+  const customBottomPadding = insets.bottom + 75 + 10;
+
+  // ✅ Quando filtros mudam, resetamos paginação
   const updateFilters = useCallback((next: OccurrenceFilters) => {
     setFilters(next);
     setPage(0);
     setOccurrences([]);
   }, []);
 
+  // ✅ Carrega ocorrências com paginação
   const loadOccurrences = useCallback(async () => {
     try {
       setLoading(true);
+
       const token = await AsyncStorage.getItem("token");
       if (!token) throw new Error("Token não encontrado");
 
       const data = await fetchOccurrences(token, filters, page, 20);
+
       setOccurrences((prev) =>
         page === 0 ? data.content : [...prev, ...data.content]
       );
+
       setHasMore(page + 1 < data.totalPages);
     } catch (error) {
       Alert.alert("Erro", "Não foi possível carregar as ocorrências.");
@@ -46,6 +60,7 @@ export default function OccurrencesPage() {
     }
   }, [filters, page]);
 
+  // ✅ Recarrega quando filtros ou página mudam
   useEffect(() => {
     loadOccurrences();
   }, [loadOccurrences]);
@@ -56,26 +71,7 @@ export default function OccurrencesPage() {
     }
   };
 
-  // const handleFilters = async () => {
-  //   try {
-  //     setLoading(true);
-  //     const token = await AsyncStorage.getItem("token");
-  //     if (!token) throw new Error("Token não encontrado");
-
-  //     const data = await fetchOccurrences(token, filters);
-  //     setOccurrences(data);
-  //   } catch (error) {
-  //     Alert.alert("Erro", "Não foi possível aplicar os filtros.");
-  //     console.error("Erro ao aplicar filtros:", error);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   loadOccurrences();
-  // }, []);
-
+  // ✅ Renderiza filtros ativos
   function ActiveFilters({ filters }: { filters: OccurrenceFilters }) {
     const parts: string[] = [];
 
@@ -99,43 +95,62 @@ export default function OccurrencesPage() {
     );
   }
 
-  return (
-    <LayoutWrapper
-      header={
-        <HeaderWithFilters
-          avatarUrl={user?.avatar_url ?? "https://placehold.co/100x100/png"}
-          title="Minhas Ocorrências"
-          onFiltersChange={updateFilters}
-        />
-      }
-    >
-      <ActiveFilters filters={filters} />
-      {occurrences.length === 0 && loading ? (
-        <ActivityIndicator
-          size="large"
-          color="#6C2020"
-          style={{ marginTop: 40 }}
-        />
-      ) : (
-        <OccurrencesList
-          data={occurrences}
-          onLoadMore={handleLoadMore}
-          hasMore={hasMore}
-          loading={loading}
-          onSelect={(occurrence) => {
-            setSelectedOccurrence(occurrence);
-            setModalVisible(true);
-          }}
-        />
-      )}
+  // ✅ ADMIN e CHEFE veem tudo
+  const filteredOccurrences = adminOrChefe
+    ? occurrences
+    : occurrences.filter((o) => canAccessRegion(o.regiao));
 
-      {selectedOccurrence && (
-        <OccurrenceDetailsModal
-          visible={modalVisible}
-          onClose={() => setModalVisible(false)}
-          occurrence={selectedOccurrence}
-        />
-      )}
-    </LayoutWrapper>
+  return (
+    <ProtectedRoute allowedRoles={["USUARIO", "ANALISTA", "CHEFE", "ADMIN"]}>
+      <View style={{ flex: 1, paddingBottom: customBottomPadding }}>
+        <LayoutWrapper
+          header={
+            <HeaderWithFilters
+              avatarUrl={user?.avatar_url ?? "https://placehold.co/100x100/png"}
+              title="Minhas Ocorrências"
+              onFiltersChange={updateFilters}
+            />
+          }
+        >
+          <ActiveFilters filters={filters} />
+
+          {filteredOccurrences.length === 0 && loading ? (
+            <ActivityIndicator
+              size="large"
+              color="#6C2020"
+              style={{ marginTop: 40 }}
+            />
+          ) : (
+            <OccurrencesList
+              data={filteredOccurrences}
+              onLoadMore={handleLoadMore}
+              hasMore={hasMore}
+              loading={loading}
+              onSelect={(occurrence) => {
+                if (!adminOrChefe && !canAccessRegion(occurrence.regiao)) {
+                  Alert.alert(
+                    "Acesso negado",
+                    "Você não tem permissão visualizar ocorrências de outra região."
+                  );
+                  return;
+                }
+
+                setSelectedOccurrence(occurrence);
+                setModalVisible(true);
+              }}
+            />
+          )}
+
+          {selectedOccurrence &&
+            (adminOrChefe || canAccessRegion(selectedOccurrence.regiao)) && (
+              <OccurrenceDetailsModal
+                visible={modalVisible}
+                onClose={() => setModalVisible(false)}
+                occurrence={selectedOccurrence}
+              />
+            )}
+        </LayoutWrapper>
+      </View>
+    </ProtectedRoute>
   );
 }

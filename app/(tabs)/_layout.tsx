@@ -11,28 +11,20 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const CUSTOM_TAB_BAR_HEIGHT = 75;
 const CUSTOM_TAB_BAR_BOTTOM_SPACING = 10;
-const TOTAL_TAB_BAR_SPACE =
-  CUSTOM_TAB_BAR_HEIGHT + CUSTOM_TAB_BAR_BOTTOM_SPACING;
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
 
-  const customBottomPadding = insets.bottom + TOTAL_TAB_BAR_SPACE;
-
   return (
     <Tabs
-      {...({
-        screenOptions: {
-          headerShown: false,
-        },
-        sceneContainerStyle: {
-          paddingBottom: customBottomPadding,
-        },
-        tabBar: (props: any) => (
-          <CustomTabBar {...props} bottomInset={insets.bottom} />
-        ),
-      } as any)}
+      screenOptions={{
+        headerShown: false,
+      }}
+      tabBar={(props: any) => (
+        <CustomTabBar {...props} bottomInset={insets.bottom} />
+      )}
     >
+      {/*  Todas as telas devem existir fisicamente */}
       <Tabs.Screen name="index" options={{ title: "Início" }} />
       <Tabs.Screen name="occurrences" options={{ title: "Ocorrências" }} />
       <Tabs.Screen name="create" options={{ title: "Criar Ocorrência" }} />
@@ -61,6 +53,7 @@ function CustomTabBar({ state, descriptors, navigation, bottomInset }: any) {
             target: route.key,
             canPreventDefault: true,
           });
+
           if (!isFocused && !event.defaultPrevented) {
             navigation.navigate(route.name);
           }

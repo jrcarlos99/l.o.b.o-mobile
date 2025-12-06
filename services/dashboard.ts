@@ -20,6 +20,7 @@ export async function fetchDashboardStats(
       params: {
         dataInicio: start.toISOString().split("T")[0],
         dataFim: end.toISOString().split("T")[0],
+        regiao: filters.regiao || undefined, // envia região apenas se existir
       },
     });
 

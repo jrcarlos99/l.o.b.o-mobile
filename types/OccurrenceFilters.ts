@@ -1,6 +1,6 @@
 export interface OccurrenceFilters {
   status?: string;
-  regiao?: "RMR" | "AGRE" | "ZDMT" | "SERT";
+  regiao?: "RMR" | "AGRE" | "ZDMT" | "SERT" | "todos" | undefined;
   cidade?: string;
   tipo?:
     | "INCENDIO"

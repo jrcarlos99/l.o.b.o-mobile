@@ -1,4 +1,4 @@
-import { Dimensions } from "react-native";
+import { Dimensions, Text, View } from "react-native";
 import { PieChart } from "react-native-chart-kit";
 
 const screenWidth = Dimensions.get("window").width;
@@ -12,11 +12,30 @@ type PieItem = {
 };
 
 export function CustomPieChart({ data }: { data: PieItem[] }) {
+  if (!data || data.length === 0) {
+    return (
+      <View
+        style={{
+          width: screenWidth - 32,
+          height: 200,
+          borderRadius: 12,
+          backgroundColor: "#fff",
+          justifyContent: "center",
+          alignItems: "center",
+          borderWidth: 1,
+          borderColor: "#ddd",
+        }}
+      >
+        <Text style={{ color: "#666" }}>Sem dados para exibir</Text>
+      </View>
+    );
+  }
+
   return (
     <PieChart
       data={data}
       width={screenWidth - 32}
-      height={260} // ✅ aumentei altura para labels não ficarem cortados
+      height={260}
       accessor="population"
       backgroundColor="transparent"
       paddingLeft="8"
