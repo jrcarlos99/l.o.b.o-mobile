@@ -54,9 +54,18 @@ export default function OccurrencesPage() {
 
       const data = await fetchOccurrences(token, filters, page, 20);
 
-      setOccurrences((prev) =>
-        page === 0 ? data.content : [...prev, ...data.content]
-      );
+      setOccurrences((prev: Occurrence[]) => {
+        const merged: Occurrence[] =
+          page === 0 ? data.content : [...prev, ...data.content];
+
+        //  Remove duplicados por ID
+        const unique: Occurrence[] = merged.filter(
+          (item: Occurrence, index: number, self: Occurrence[]) =>
+            index === self.findIndex((o: Occurrence) => o.id === item.id)
+        );
+
+        return unique;
+      });
 
       setHasMore(page + 1 < data.totalPages);
     } catch (error) {
@@ -95,18 +104,25 @@ export default function OccurrencesPage() {
 
   //  Atualiza status da ocorrência
   async function updateOccurrenceStatus(id: number, status: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("ocorrencia")
       .update({
         status,
         data_hora_atualizacao: new Date().toISOString(),
       })
-      .eq("id", id);
+      .eq("id", id)
+      .select()
+      .single();
 
     if (error) {
       Alert.alert("Erro", "Não foi possível atualizar o status.");
       return;
     }
+
+    setOccurrences((prev) => {
+      const filtered = prev.filter((o) => o.id !== id);
+      return [data as Occurrence, ...filtered];
+    });
 
     await loadOccurrences();
   }
@@ -203,6 +219,13 @@ export default function OccurrencesPage() {
                 }}
                 onChangeStatus={async (occ: Occurrence, status: string) => {
                   await updateOccurrenceStatus(occ.id, status);
+                  Alert.alert(
+                    "Status atualizado",
+                    `A ocorrência foi marcada como ${
+                      status === "CONCLUIDO" ? "concluida" : "atualizada"
+                    }`
+                  );
+                  setModalVisible(false);
                 }}
                 onOpenMap={(lat: number, lon: number) => {
                   Linking.openURL(

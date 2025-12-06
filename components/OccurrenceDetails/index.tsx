@@ -1,6 +1,7 @@
 import { Occurrence } from "@/types/OccurrenceType";
 import React from "react";
-import { Modal, SafeAreaView, ScrollView } from "react-native";
+import { Modal, ScrollView } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { occurrenceDetailsStyles as styles } from "./styles";
 
 import { ActionsSection } from "./ActionsSection";

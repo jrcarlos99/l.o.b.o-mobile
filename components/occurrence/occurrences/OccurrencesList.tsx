@@ -24,7 +24,10 @@ function groupByMonth(occurrences: Occurrence[]) {
     groups[key].push(occ);
   });
 
-  return Object.entries(groups).map(([title, data]) => ({ title, data }));
+  return Object.entries(groups).map(([title, data]) => ({
+    title,
+    data,
+  }));
 }
 
 type Props = {
