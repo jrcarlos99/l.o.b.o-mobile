@@ -20,7 +20,7 @@ export interface Occurrence {
   titulo: string;
   descricao: string;
   solicitante?: string;
-  regiao: string;
+  regiao: string | null;
   cidade: string;
   status: OccurrenceStatus;
   tipo: OccurrenceType;

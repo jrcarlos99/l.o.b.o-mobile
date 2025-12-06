@@ -1,10 +1,10 @@
+import { useAuthStore } from "@/store/authStore";
 import { supabase } from "@/utils/supabase";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
 
 interface ViaturaItem {
   id: string;
-  nome: string;
+  descricao: string;
 }
 
 interface EquipeItem {
@@ -17,29 +17,23 @@ export const useOccurrencePickers = () => {
   const [viaturaItems, setViaturaItems] = useState<ViaturaItem[]>([]);
   const [equipeItems, setEquipeItems] = useState<EquipeItem[]>([]);
 
+  const token = useAuthStore((s) => s.token);
+  const hydrated = useAuthStore((s) => s._hasHydrated);
+
   useEffect(() => {
+    if (!hydrated || !token) return;
+
     const loadPickersData = async () => {
       try {
         setLoadingPickers(true);
-        const token = await AsyncStorage.getItem("authToken");
-
-        if (!token) {
-          console.warn("No auth token found");
-          setLoadingPickers(false);
-          return;
-        }
 
         const [viaturaRes, equipeRes] = await Promise.all([
-          fetchViaturas(token),
-          fetchEquipes(token),
+          fetchViaturas(),
+          fetchEquipes(),
         ]);
 
-        if (viaturaRes) {
-          setViaturaItems(viaturaRes);
-        }
-        if (equipeRes) {
-          setEquipeItems(equipeRes);
-        }
+        setViaturaItems(viaturaRes);
+        setEquipeItems(equipeRes);
       } catch (error) {
         console.error("Error loading pickers data:", error);
       } finally {
@@ -48,30 +42,30 @@ export const useOccurrencePickers = () => {
     };
 
     loadPickersData();
-  }, []);
+  }, [hydrated, token]);
 
-  const fetchViaturas = async (token: string): Promise<ViaturaItem[]> => {
+  const fetchViaturas = async (): Promise<ViaturaItem[]> => {
     try {
       const { data, error } = await supabase
-        .from("viaturas")
-        .select("id, nome");
+        .from("viatura")
+        .select("id, descricao");
 
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error("Error fetching viaturas:", error);
+      console.error("Erro ao buscar viaturas:", error);
       return [];
     }
   };
 
-  const fetchEquipes = async (token: string): Promise<EquipeItem[]> => {
+  const fetchEquipes = async (): Promise<EquipeItem[]> => {
     try {
-      const { data, error } = await supabase.from("equipes").select("id, nome");
+      const { data, error } = await supabase.from("equipe").select("id, nome");
 
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error("Error fetching equipes:", error);
+      console.error("Erro ao buscar equipes:", error);
       return [];
     }
   };

@@ -29,7 +29,14 @@ export const occurrenceDetailsStyles = StyleSheet.create({
   description: { fontSize: 16, marginBottom: 8 },
   location: { fontSize: 14, color: "#555", marginBottom: 4 },
   date: { fontSize: 12, color: "#777", marginBottom: 4 },
-  gps: { fontSize: 12, color: "#777", marginBottom: 8 },
+  gps: {
+    fontSize: 12,
+    color: "#777",
+    marginBottom: 8,
+    flexShrink: 1,
+    flexWrap: "wrap",
+    maxWidth: "80%",
+  },
   mapButton: {
     marginLeft: 12,
     color: "#6C2020",
@@ -53,4 +60,12 @@ export const occurrenceDetailsStyles = StyleSheet.create({
   signatureLabel: { fontSize: 12, color: "#666", marginTop: 4 },
   empty: { fontSize: 14, color: "#999", marginBottom: 12 },
   timeline: { fontSize: 14, marginBottom: 4 },
+
+  modalWrapper: {
+    flex: 1,
+    backgroundColor: "#f9f9f9",
+  },
+  scrollContent: {
+    paddingBottom: 32,
+  },
 });

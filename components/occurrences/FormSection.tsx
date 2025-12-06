@@ -14,7 +14,7 @@ import {
 
 interface ViaturaItem {
   id: string;
-  nome: string;
+  descricao: string;
 }
 
 interface EquipeItem {
@@ -74,7 +74,7 @@ export const FormSection: React.FC<FormSectionProps> = ({
 
   const getVehicleLabel = () => {
     return (
-      viaturaItems.find((v) => v.id === formik.values.vehicle)?.nome ||
+      viaturaItems.find((v) => v.id === formik.values.vehicle)?.descricao ||
       "Selecionar viatura"
     );
   };
@@ -307,7 +307,7 @@ export const FormSection: React.FC<FormSectionProps> = ({
                           styles.modalItemTextActive,
                       ]}
                     >
-                      {item.nome}
+                      {item.descricao}
                     </Text>
                   </TouchableOpacity>
                 )}

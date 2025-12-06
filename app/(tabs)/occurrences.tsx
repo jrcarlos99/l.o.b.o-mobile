@@ -1,20 +1,24 @@
 import HeaderWithFilters from "@/components/Header/HeaderWithFilters";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import { OccurrencesList } from "@/components/occurrence/occurrences/OccurrencesList";
-import OccurrenceDetailsModal from "@/components/OccurrenceDetailsModal";
+import OccurrenceDetailsModal from "@/components/OccurrenceDetails";
 import { usePermission } from "@/hooks/usePermission";
 import ProtectedRoute from "@/middleware/ProtectedRoute";
 import { fetchOccurrences } from "@/services/occurrences";
 import { useAuthStore } from "@/store/authStore";
 import { OccurrenceFilters } from "@/types/OccurrenceFilters";
 import { Occurrence } from "@/types/OccurrenceType";
+import { supabase } from "@/utils/supabase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Linking, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function OccurrencesPage() {
   const user = useAuthStore((s) => s.user);
+  const router = useRouter();
+
   const [occurrences, setOccurrences] = useState<Occurrence[]>([]);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -22,6 +26,9 @@ export default function OccurrencesPage() {
   const [filters, setFilters] = useState<OccurrenceFilters>({});
   const [selectedOccurrence, setSelectedOccurrence] =
     useState<Occurrence | null>(null);
+  const [selectedOccurrenceAnexos, setSelectedOccurrenceAnexos] = useState<
+    any[]
+  >([]);
   const [modalVisible, setModalVisible] = useState(false);
 
   const { isAdmin, isChefe, canAccessRegion } = usePermission();
@@ -30,14 +37,14 @@ export default function OccurrencesPage() {
   const insets = useSafeAreaInsets();
   const customBottomPadding = insets.bottom + 75 + 10;
 
-  // ✅ Quando filtros mudam, resetamos paginação
+  //  Quando filtros mudam, resetamos paginação
   const updateFilters = useCallback((next: OccurrenceFilters) => {
     setFilters(next);
     setPage(0);
     setOccurrences([]);
   }, []);
 
-  // ✅ Carrega ocorrências com paginação
+  //  Carrega ocorrências com paginação
   const loadOccurrences = useCallback(async () => {
     try {
       setLoading(true);
@@ -60,7 +67,7 @@ export default function OccurrencesPage() {
     }
   }, [filters, page]);
 
-  // ✅ Recarrega quando filtros ou página mudam
+  // Recarrega quando filtros ou página mudam
   useEffect(() => {
     loadOccurrences();
   }, [loadOccurrences]);
@@ -71,7 +78,40 @@ export default function OccurrencesPage() {
     }
   };
 
-  // ✅ Renderiza filtros ativos
+  //  Carrega anexos da ocorrência selecionada
+  async function loadAnexos(occId: number) {
+    const { data, error } = await supabase
+      .from("ocorrencia_anexos")
+      .select("*")
+      .eq("ocorrencia_id", occId);
+
+    if (error) {
+      console.error("Erro ao carregar anexos:", error);
+      return;
+    }
+
+    setSelectedOccurrenceAnexos(data ?? []);
+  }
+
+  //  Atualiza status da ocorrência
+  async function updateOccurrenceStatus(id: number, status: string) {
+    const { error } = await supabase
+      .from("ocorrencia")
+      .update({
+        status,
+        data_hora_atualizacao: new Date().toISOString(),
+      })
+      .eq("id", id);
+
+    if (error) {
+      Alert.alert("Erro", "Não foi possível atualizar o status.");
+      return;
+    }
+
+    await loadOccurrences();
+  }
+
+  //  Renderiza filtros ativos
   function ActiveFilters({ filters }: { filters: OccurrenceFilters }) {
     const parts: string[] = [];
 
@@ -95,10 +135,10 @@ export default function OccurrencesPage() {
     );
   }
 
-  // ✅ ADMIN e CHEFE veem tudo
+  //  ADMIN e CHEFE veem tudo
   const filteredOccurrences = adminOrChefe
     ? occurrences
-    : occurrences.filter((o) => canAccessRegion(o.regiao));
+    : occurrences.filter((o) => o.regiao && canAccessRegion(o.regiao));
 
   return (
     <ProtectedRoute allowedRoles={["USUARIO", "ANALISTA", "CHEFE", "ADMIN"]}>
@@ -126,8 +166,11 @@ export default function OccurrencesPage() {
               onLoadMore={handleLoadMore}
               hasMore={hasMore}
               loading={loading}
-              onSelect={(occurrence) => {
-                if (!adminOrChefe && !canAccessRegion(occurrence.regiao)) {
+              onSelect={async (occurrence) => {
+                if (
+                  !adminOrChefe &&
+                  !(occurrence.regiao && canAccessRegion(occurrence.regiao))
+                ) {
                   Alert.alert(
                     "Acesso negado",
                     "Você não tem permissão visualizar ocorrências de outra região."
@@ -136,17 +179,36 @@ export default function OccurrencesPage() {
                 }
 
                 setSelectedOccurrence(occurrence);
+                await loadAnexos(occurrence.id);
                 setModalVisible(true);
               }}
             />
           )}
 
           {selectedOccurrence &&
-            (adminOrChefe || canAccessRegion(selectedOccurrence.regiao)) && (
+            (adminOrChefe ||
+              (selectedOccurrence.regiao &&
+                canAccessRegion(selectedOccurrence.regiao))) && (
               <OccurrenceDetailsModal
                 visible={modalVisible}
                 onClose={() => setModalVisible(false)}
                 occurrence={selectedOccurrence}
+                anexos={selectedOccurrenceAnexos}
+                onEdit={(occ: Occurrence) => {
+                  setModalVisible(false);
+                  router.push({
+                    pathname: "/occurrences/edit/[id]",
+                    params: { id: occ.id.toString() },
+                  });
+                }}
+                onChangeStatus={async (occ: Occurrence, status: string) => {
+                  await updateOccurrenceStatus(occ.id, status);
+                }}
+                onOpenMap={(lat: number, lon: number) => {
+                  Linking.openURL(
+                    `https://www.google.com/maps?q=${lat},${lon}`
+                  );
+                }}
               />
             )}
         </LayoutWrapper>

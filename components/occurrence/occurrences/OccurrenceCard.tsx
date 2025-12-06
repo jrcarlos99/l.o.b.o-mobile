@@ -36,16 +36,14 @@ export default function OccurrenceCard({ data, onSelect }: Props) {
 
   return (
     <View style={styles.card}>
-      <View>
+      <View style={styles.cardContent}>
         <Text style={styles.cardId}>{data.id}</Text>
         <Text style={styles.cardTitle}>{formatTipo(data.tipo)}</Text>
-
         <Text style={styles.cardLocal}>
           {data.cidade && data.regiao
             ? `${data.cidade}, ${data.regiao}`
             : "Local não informado"}
         </Text>
-
         <Text style={styles.cardDate}>
           {new Date(data.dataHoraAbertura).toLocaleString("pt-BR", {
             day: "2-digit",
@@ -55,7 +53,6 @@ export default function OccurrenceCard({ data, onSelect }: Props) {
             minute: "2-digit",
           })}
         </Text>
-
         <Text style={styles.cardDescription}>
           {data.descricao || "Sem descrição"}
         </Text>
@@ -65,9 +62,12 @@ export default function OccurrenceCard({ data, onSelect }: Props) {
           {data.status}
         </Text>
       </View>
-      <Pressable onPress={() => onSelect?.(data)} style={styles.cardButton}>
-        <Text style={styles.cardDetails}>Detalhes {">"}</Text>
-      </Pressable>
+
+      <View style={styles.cardButtonWrapper}>
+        <Pressable onPress={() => onSelect?.(data)}>
+          <Text style={styles.cardDetails}>Detalhes {">"}</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -78,13 +78,16 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 16,
     marginBottom: 12,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
     shadowColor: "#000",
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
+  },
+  cardContent: {
+    marginBottom: 8,
+  },
+  cardButtonWrapper: {
+    alignItems: "flex-end",
   },
   cardId: {
     fontSize: 12,
@@ -114,12 +117,17 @@ const styles = StyleSheet.create({
   },
 
   cardButton: {
-    paddingLeft: 12,
+    paddingLeft: 8,
   },
   cardDetails: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#6C2020",
+    color: "#fff",
+    backgroundColor: "#6C2020",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    overflow: "hidden",
   },
   cardStatus: {
     fontSize: 14,

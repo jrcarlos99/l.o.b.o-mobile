@@ -4,19 +4,25 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Props = {
   header?: ReactNode;
-
   children: ReactNode;
 };
 
 export default function LayoutWrapper({ header, children }: Props) {
   const insets = useSafeAreaInsets();
 
+  const HEADER_HEIGHT = 160;
+
   return (
     <View style={styles.safeArea}>
       <StatusBar backgroundColor="#E5E4E4" barStyle="dark-content" />
 
       {/* Header que recebe paddingTop dinâmico  */}
-      <View style={[styles.headerWrapper, { paddingTop: insets.top }]}>
+      <View
+        style={[
+          styles.headerWrapper,
+          { paddingTop: insets.top, height: HEADER_HEIGHT },
+        ]}
+      >
         {header}
       </View>
 
@@ -24,7 +30,7 @@ export default function LayoutWrapper({ header, children }: Props) {
       <View
         style={[
           styles.container,
-          { paddingBottom: insets.bottom, marginTop: 0 },
+          { paddingBottom: insets.bottom, marginTop: HEADER_HEIGHT },
         ]}
       >
         {children}
