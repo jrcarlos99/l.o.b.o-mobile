@@ -106,7 +106,7 @@ export default function Index() {
         return;
       }
 
-      // ✅ Filtros efetivos
+      //  Filtros efetivos
       const effectiveFilters: OccurrenceFilters = { ...filters };
 
       if (!adminOrChefe) {
@@ -118,19 +118,36 @@ export default function Index() {
         delete effectiveFilters.regiao;
       }
 
-      // ✅ Dashboard
-      const stats = await fetchDashboardStats(token, effectiveFilters);
+      //  DASHBOARD — somente ADMIN e CHEFE
+      let stats: any = null;
 
-      if (!adminOrChefe) {
-        const region = user?.regiaoAutorizada?.trim().toUpperCase();
-        stats.porRegiao = region
-          ? { [region]: stats.porRegiao?.[region] ?? 0 }
-          : {};
+      if (adminOrChefe) {
+        const role = isAdmin()
+          ? "ADMIN"
+          : isChefe()
+          ? "CHEFE"
+          : user?.perfil ?? "OPERADOR";
+
+        stats = await fetchDashboardStats(token, effectiveFilters, role);
+
+        if (!isAdmin()) {
+          const region = user?.regiaoAutorizada?.trim().toUpperCase();
+          stats.porRegiao = region
+            ? { [region]: stats.porRegiao?.[region] ?? 0 }
+            : {};
+        }
+
+        processStats(stats);
+      } else {
+        //  OPERADOR → limpa gráficos
+        setTipoData(null);
+        setRegiaoData(null);
+        setTurnoData(null);
+        setStatusData(null);
+        setTotal(0);
       }
 
-      processStats(stats);
-
-      // ✅ Ocorrências
+      //  Ocorrências
       const occs = await fetchOccurrences(token, effectiveFilters);
 
       const mapped = Array.isArray(occs.content)
@@ -163,6 +180,8 @@ export default function Index() {
     user,
     canAccessRegion,
     processStats,
+    isAdmin,
+    isChefe,
   ]);
 
   useEffect(() => {

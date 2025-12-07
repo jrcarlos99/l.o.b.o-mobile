@@ -13,8 +13,6 @@ import { SignatureSection } from "./SignatureSection";
 import { StatusSection } from "./StatusSection";
 import { TimelineSection } from "./TimelineSection";
 
-import { usePermission } from "@/hooks/usePermission";
-
 type Props = {
   visible: boolean;
   onClose: () => void;
@@ -41,9 +39,6 @@ export default function OccurrenceDetailsModal({
   onOpenMap,
   anexos = [],
 }: Props) {
-  const { isAdmin, isChefe } = usePermission();
-  const adminOrChefe = isAdmin() || isChefe();
-
   if (!occurrence) return null;
 
   const imagens = anexos.filter((a) => a.tipo === "IMAGEM");
@@ -97,7 +92,7 @@ export default function OccurrenceDetailsModal({
 
           <LocationSection occurrence={occurrence} onOpenMap={onOpenMap} />
 
-          <AttachmentsSection images={imagens} />
+          <AttachmentsSection images={occurrence.anexos ?? []} />
 
           <SignatureSection signatureUrl={assinatura?.url_anexo} />
 
@@ -105,10 +100,8 @@ export default function OccurrenceDetailsModal({
 
           <ActionsSection
             occurrence={occurrence}
-            onEdit={handleEdit}
-            onChangeStatus={
-              adminOrChefe && onChangeStatus ? handleChangeStatus : undefined
-            }
+            onEdit={onEdit ? handleEdit : undefined}
+            onChangeStatus={onChangeStatus ? handleChangeStatus : undefined}
           />
         </ScrollView>
       </SafeAreaView>

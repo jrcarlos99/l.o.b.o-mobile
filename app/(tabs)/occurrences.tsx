@@ -5,7 +5,6 @@ import OccurrenceDetailsModal from "@/components/OccurrenceDetails";
 import { usePermission } from "@/hooks/usePermission";
 import ProtectedRoute from "@/middleware/ProtectedRoute";
 import { fetchOccurrences } from "@/services/occurrences";
-import { useAuthStore } from "@/store/authStore";
 import { OccurrenceFilters } from "@/types/OccurrenceFilters";
 import { Occurrence } from "@/types/OccurrenceType";
 import { supabase } from "@/utils/supabase";
@@ -16,7 +15,6 @@ import { ActivityIndicator, Alert, Linking, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function OccurrencesPage() {
-  const user = useAuthStore((s) => s.user);
   const router = useRouter();
 
   const [occurrences, setOccurrences] = useState<Occurrence[]>([]);
@@ -31,7 +29,8 @@ export default function OccurrencesPage() {
   >([]);
   const [modalVisible, setModalVisible] = useState(false);
 
-  const { isAdmin, isChefe, canAccessRegion } = usePermission();
+  const { isAdmin, isChefe, isOperador, canAccessRegion, user } =
+    usePermission();
   const adminOrChefe = isAdmin() || isChefe();
 
   const insets = useSafeAreaInsets();
@@ -157,7 +156,7 @@ export default function OccurrencesPage() {
     : occurrences.filter((o) => o.regiao && canAccessRegion(o.regiao));
 
   return (
-    <ProtectedRoute allowedRoles={["USUARIO", "ANALISTA", "CHEFE", "ADMIN"]}>
+    <ProtectedRoute allowedRoles={["OPERADOR", "CHEFE", "ADMIN"]}>
       <View style={{ flex: 1, paddingBottom: customBottomPadding }}>
         <LayoutWrapper
           header={
@@ -210,23 +209,35 @@ export default function OccurrencesPage() {
                 onClose={() => setModalVisible(false)}
                 occurrence={selectedOccurrence}
                 anexos={selectedOccurrenceAnexos}
-                onEdit={(occ: Occurrence) => {
-                  setModalVisible(false);
-                  router.push({
-                    pathname: "/occurrences/edit/[id]",
-                    params: { id: occ.id.toString() },
-                  });
-                }}
-                onChangeStatus={async (occ: Occurrence, status: string) => {
-                  await updateOccurrenceStatus(occ.id, status);
-                  Alert.alert(
-                    "Status atualizado",
-                    `A ocorrência foi marcada como ${
-                      status === "CONCLUIDO" ? "concluida" : "atualizada"
-                    }`
-                  );
-                  setModalVisible(false);
-                }}
+                onEdit={(function () {
+                  const canEdit =
+                    adminOrChefe ||
+                    (isOperador() && selectedOccurrence.criadoPor === user?.id);
+                  if (!canEdit) return undefined;
+                  return (occ: Occurrence) => {
+                    setModalVisible(false);
+                    router.push({
+                      pathname: "/occurrences/edit/[id]",
+                      params: { id: occ.id.toString() },
+                    });
+                  };
+                })()}
+                onChangeStatus={(function () {
+                  const canConclude =
+                    adminOrChefe ||
+                    (isOperador() && selectedOccurrence.criadoPor === user?.id);
+                  if (!canConclude) return undefined;
+                  return async (occ: Occurrence, status: string) => {
+                    await updateOccurrenceStatus(occ.id, status);
+                    Alert.alert(
+                      "Status atualizado",
+                      `A ocorrência foi marcada como ${
+                        status === "CONCLUIDO" ? "concluida" : "atualizada"
+                      }`
+                    );
+                    setModalVisible(false);
+                  };
+                })()}
                 onOpenMap={(lat: number, lon: number) => {
                   Linking.openURL(
                     `https://www.google.com/maps?q=${lat},${lon}`

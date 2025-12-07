@@ -14,8 +14,8 @@ export function usePermission() {
 
   const isAdmin = useCallback(() => user?.perfil === "ADMIN", [user]);
   const isChefe = useCallback(() => user?.perfil === "CHEFE", [user]);
-  const isAnalista = useCallback(() => user?.perfil === "ANALISTA", [user]);
-
+  const isOperador = () =>
+    user?.perfil === "OPERADOR" || user?.perfil === "ANALISTA";
   const canAccessRegion = useCallback(
     (regiao: string) => {
       if (!user) return false;
@@ -33,7 +33,7 @@ export function usePermission() {
     hasRole,
     isAdmin,
     isChefe,
-    isAnalista,
+    isOperador,
     canAccessRegion,
   };
 }

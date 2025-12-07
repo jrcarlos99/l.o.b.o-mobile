@@ -53,7 +53,7 @@ export default function HeaderWithFilters({
   const normalize = (value: string) =>
     ["todos", "tipo", "status", "regiao"].includes(value) ? undefined : value;
 
-  //  Força região correta para CHEFE/ANALISTA
+  //  Força região correta para usuários não-admin (inclui OPERADOR)
   useEffect(() => {
     if (!isAdmin()) {
       const region = user?.regiaoAutorizada ?? "regiao";

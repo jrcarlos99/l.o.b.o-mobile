@@ -6,8 +6,13 @@ const API_BASE_URL = "https://webapp-ocorrencias.onrender.com/api/ocorrencias";
 
 export async function fetchDashboardStats(
   token: string,
-  filters: OccurrenceFilters
+  filters: OccurrenceFilters,
+  role: string
 ) {
+  if (role === "OPERADOR") {
+    return null;
+  }
+
   const params: Record<string, any> = {};
 
   if (filters.dataInicio) {

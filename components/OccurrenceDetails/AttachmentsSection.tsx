@@ -2,13 +2,8 @@ import React from "react";
 import { Image, Text, View } from "react-native";
 import { occurrenceDetailsStyles as styles } from "./styles";
 
-type Attachment = {
-  id: number | string;
-  url_anexo: string;
-};
-
 type Props = {
-  images: Attachment[];
+  images: string[];
 };
 
 export function AttachmentsSection({ images }: Props) {
@@ -21,10 +16,10 @@ export function AttachmentsSection({ images }: Props) {
       {!hasImages && <Text style={styles.empty}>Nenhum anexo disponível.</Text>}
 
       {hasImages &&
-        images.map((img) => (
+        images.map((url, index) => (
           <Image
-            key={img.id}
-            source={{ uri: img.url_anexo }}
+            key={index}
+            source={{ uri: url }}
             style={styles.image}
             resizeMode="cover"
           />

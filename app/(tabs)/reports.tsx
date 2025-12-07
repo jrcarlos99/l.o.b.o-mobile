@@ -69,7 +69,7 @@ export default function ReportsScreen() {
   };
 
   return (
-    <ProtectedRoute allowedRoles={["ANALISTA", "CHEFE", "ADMIN"]}>
+    <ProtectedRoute allowedRoles={["OPERADOR", "CHEFE", "ADMIN"]}>
       <View style={{ flex: 1, paddingBottom: customBottomPadding }}>
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.container}>

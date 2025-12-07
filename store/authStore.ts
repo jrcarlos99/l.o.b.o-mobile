@@ -6,7 +6,7 @@ export interface User {
   id: number;
   nomeCompleto: string;
   email: string;
-  perfil: "ADMIN" | "CHEFE" | "ANALISTA" | "USUARIO";
+  perfil: "ADMIN" | "CHEFE" | "ANALISTA" | "USUARIO" | "OPERADOR";
   regiao: string;
   regiaoAutorizada: string;
   avatar_url?: string;

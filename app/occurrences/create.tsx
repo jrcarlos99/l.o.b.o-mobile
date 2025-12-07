@@ -167,7 +167,7 @@ export default function CreateOccurrenceScreen() {
 
   return (
     <>
-      <ProtectedRoute allowedRoles={["OPERADOR", "ANALISTA", "CHEFE", "ADMIN"]}>
+      <ProtectedRoute allowedRoles={["OPERADOR", "CHEFE", "ADMIN"]}>
         <HeaderSection onBack={() => router.push("/(tabs)/occurrences")} />
 
         {showSignatureModal && (

@@ -17,11 +17,11 @@ export type OccurrenceType =
 
 export interface Occurrence {
   id: number;
-  titulo: string;
+  titulo: string | null;
   descricao: string;
   solicitante?: string;
   regiao: string | null;
-  cidade: string;
+  cidade: string | null;
   status: OccurrenceStatus;
   tipo: OccurrenceType;
   dataHoraAbertura: string;
@@ -31,9 +31,5 @@ export interface Occurrence {
   historico?: unknown[];
   criadoPor?: string;
   atualizadoPor?: string;
-  anexos?: {
-    id: number;
-    url_anexo: string;
-    tipo: "IMAGEM" | "ASSINATURA";
-  };
+  anexos: string[];
 }
