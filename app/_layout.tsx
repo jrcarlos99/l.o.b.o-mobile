@@ -17,6 +17,9 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useAuthStore } from "@/store/authStore";
 import { useEffect, useRef } from "react";
 
+import { initializeDatabase } from "@/src/database/database";
+import { tentarSincronizar } from "@/src/database/repositories/syncRepository";
+
 export const unstable_settings = {
   anchor: "(tabs)",
 };
@@ -30,6 +33,20 @@ export default function RootLayout() {
   const initializeAuth = useAuthStore((s) => s.initializeAuth);
   const token = useAuthStore((s) => s.token);
   const hydrated = useAuthStore((s) => s._hasHydrated);
+
+  // Inicializa o banco local (SQLite)
+  useEffect(() => {
+    initializeDatabase();
+  }, []);
+
+  // loop de sincronização automática
+  useEffect(() => {
+    const interval = setInterval(() => {
+      tentarSincronizar();
+    }, 15000); // 15 segundos
+
+    return () => clearInterval(interval);
+  }, []);
 
   //  Carrega token ao abrir o app
   useEffect(() => {
@@ -61,7 +78,7 @@ export default function RootLayout() {
       return;
     }
 
-    // ✅ Com token → redireciona para tabs
+    //  Com token → redireciona para tabs
     if (token && isAuthRoute) {
       hasNavigated.current = true;
       router.replace("/(tabs)/occurrences");
