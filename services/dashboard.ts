@@ -1,6 +1,5 @@
-// services/dashboard.ts
 import { OccurrenceFilters } from "@/types/OccurrenceFilters";
-import axios from "axios";
+import { safeAxios } from "@/utils/safeAxios";
 
 const API_BASE_URL = "https://webapp-ocorrencias.onrender.com/api/ocorrencias";
 
@@ -9,9 +8,7 @@ export async function fetchDashboardStats(
   filters: OccurrenceFilters,
   role: string
 ) {
-  if (role === "OPERADOR") {
-    return null;
-  }
+  if (role === "OPERADOR") return null;
 
   const params: Record<string, any> = {};
 
@@ -21,26 +18,26 @@ export async function fetchDashboardStats(
   if (filters.dataFim) {
     params.dataFim = filters.dataFim.toISOString().split("T")[0];
   }
-
   if (filters.regiao) {
-    params.regiao = filters.regiao as any;
+    params.regiao = filters.regiao;
   }
 
-  try {
-    const response = await axios.get(`${API_BASE_URL}/dashboard`, {
-      headers: { Authorization: `Bearer ${token}` },
-      params,
-    });
+  const response = await safeAxios({
+    url: `${API_BASE_URL}/dashboard`,
+    method: "GET",
+    headers: { Authorization: `Bearer ${token}` },
+    params,
+  });
 
-    return response.data;
-  } catch (error: any) {
-    console.error("DASHBOARD 403 DEBUG:", {
-      url: `${API_BASE_URL}/dashboard`,
-      status: error?.response?.status,
-      data: error?.response?.data,
-      params: error?.config?.params,
-      headers: error?.config?.headers,
-    });
-    throw error;
+  if (response.offline) {
+    console.log("Dashboard offline → retornando null");
+    return null;
   }
+
+  if (!response.ok) {
+    console.error("DASHBOARD 403 DEBUG:", response);
+    throw response.error;
+  }
+
+  return response.data;
 }

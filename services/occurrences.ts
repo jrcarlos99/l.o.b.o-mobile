@@ -1,6 +1,5 @@
-// services/occurrences.ts
 import { OccurrenceFilters } from "@/types/OccurrenceFilters";
-import axios from "axios";
+import { safeAxios } from "@/utils/safeAxios";
 
 const API_BASE_URL = "https://webapp-ocorrencias.onrender.com/api";
 
@@ -13,32 +12,29 @@ export async function fetchOccurrences(
   const params: Record<string, any> = { page, size };
 
   if (filters.status) params.status = filters.status;
-  if (filters.regiao) params.regiao = filters.regiao as any;
+  if (filters.regiao) params.regiao = filters.regiao;
   if (filters.cidade) params.cidade = filters.cidade;
   if (filters.tipo) params.tipo = filters.tipo;
 
-  if (filters.dataInicio) {
-    params.dataInicio = filters.dataInicio.toISOString();
-  }
-  if (filters.dataFim) {
-    params.dataFim = filters.dataFim.toISOString();
+  if (filters.dataInicio) params.dataInicio = filters.dataInicio.toISOString();
+  if (filters.dataFim) params.dataFim = filters.dataFim.toISOString();
+
+  const response = await safeAxios({
+    url: `${API_BASE_URL}/ocorrencias`,
+    method: "GET",
+    headers: { Authorization: `Bearer ${token}` },
+    params,
+  });
+
+  if (response.offline) {
+    console.log("Ocorrências offline → usar SQLite");
+    return null; // você trata isso na tela
   }
 
-  try {
-    const response = await axios.get(`${API_BASE_URL}/ocorrencias`, {
-      headers: { Authorization: `Bearer ${token}` },
-      params,
-    });
-
-    return response.data;
-  } catch (error: any) {
-    console.error("OCCURRENCES 403 DEBUG:", {
-      url: `${API_BASE_URL}/ocorrencias`,
-      status: error?.response?.status,
-      data: error?.response?.data,
-      params: error?.config?.params,
-      headers: error?.config?.headers,
-    });
-    throw error;
+  if (!response.ok) {
+    console.error("OCCURRENCES 403 DEBUG:", response);
+    throw response.error;
   }
+
+  return response.data;
 }

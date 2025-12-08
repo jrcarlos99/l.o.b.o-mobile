@@ -11,14 +11,15 @@ import useGPS from "@/hooks/useGPS";
 import ProtectedRoute from "@/middleware/ProtectedRoute";
 import { occurrenceCreateStyles as styles } from "@/styles/occurrenceCreateStyles";
 import { supabase } from "@/utils/supabase";
-import {
-  OccurrenceFormValues,
-  occurrenceSchema,
-} from "@/validation/occurrences/occurrenceSchema";
+
+import { salvarOcorrenciaOffline } from "@/src/database/repositories/ocorrenciasRepository";
+import { adicionarPendencia } from "@/src/database/repositories/pendingQueueRepository";
+import { temInternet } from "@/src/database/repositories/syncRepository";
+import { occurrenceSchema } from "@/validation/occurrences/occurrenceSchema";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { useFormik } from "formik";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -32,6 +33,16 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
+type FormValues = {
+  type: string;
+  region: string;
+  date: string;
+  vehicle: string;
+  team: string;
+  description: string;
+  address: string;
+};
+
 export default function CreateOccurrenceScreen() {
   const router = useRouter();
 
@@ -42,12 +53,23 @@ export default function CreateOccurrenceScreen() {
   const [images, setImages] = useState<string[]>([]);
   const [signatureText, setSignatureText] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [online, setOnline] = useState(true);
 
   const { gps } = useGPS();
   const insets = useSafeAreaInsets();
   const customBottomPadding = insets.bottom + 75 + 10;
 
-  const formik = useFormik<OccurrenceFormValues>({
+  // Detecta internet ao abrir a tela
+  useEffect(() => {
+    const check = async () => {
+      const status = await temInternet();
+      setOnline(status);
+    };
+    check();
+  }, []);
+
+  // Formik (sem context, simples)
+  const formik = useFormik<FormValues>({
     initialValues: {
       type: "",
       region: "",
@@ -65,6 +87,7 @@ export default function CreateOccurrenceScreen() {
     },
   });
 
+  // Selecionar imagem
   const handleAddImage = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -75,7 +98,7 @@ export default function CreateOccurrenceScreen() {
       });
 
       if (!result.canceled && result.assets[0]) {
-        setImages([...images, result.assets[0].uri]);
+        setImages((prev) => [...prev, result.assets[0].uri]);
       }
     } catch (error) {
       Alert.alert("Erro", "Não foi possível selecionar a imagem");
@@ -84,61 +107,104 @@ export default function CreateOccurrenceScreen() {
   };
 
   const handleRemoveImage = (index: number) => {
-    setImages(images.filter((_, i) => i !== index));
+    setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = async (values: any) => {
+  // SUBMIT (online + offline)
+  const handleSubmit = async (values: FormValues) => {
     try {
       setSubmitting(true);
 
       const occurrenceId = Date.now();
 
-      const { error: insertError } = await supabase.from("ocorrencia").insert({
+      const dados = {
         id: occurrenceId,
-        tipo: values.type,
-        regiao: values.region,
-        data_hora_abertura: values.date,
-        viatura_id: values.vehicle,
-        equipe_id: values.team,
+        titulo: values.type,
         descricao: values.description,
-        status: "criada",
+        regiao: values.region,
+        tipo: values.type,
+        status: "ABERTA",
         latitude: gps?.lat,
         longitude: gps?.lon,
-      });
+        viatura_id: values.vehicle ? Number(values.vehicle) : null,
+        equipe_id: values.team ? Number(values.team) : null,
+        data_hora_abertura: new Date().toISOString(),
+      };
 
-      if (insertError) throw insertError;
+      const isOnline = await temInternet();
 
-      if (images.length > 0) {
-        await uploadImages(images, String(occurrenceId));
-      }
+      if (isOnline) {
+        // Envia para Supabase
+        const { error: insertError } = await supabase
+          .from("ocorrencia")
+          .insert(dados);
 
-      if (signatureText) {
-        const content = signatureText.replace("data:image/png;base64,", "");
-        const buffer = Uint8Array.from(atob(content), (c) => c.charCodeAt(0));
-        const filename = `assinaturas/${occurrenceId}-${Date.now()}.png`;
+        if (insertError) throw insertError;
 
-        const { error } = await supabase.storage
-          .from("anexos")
-          .upload(filename, buffer, { contentType: "image/png" });
-
-        if (!error) {
-          const { data: urlData } = supabase.storage
-            .from("anexos")
-            .getPublicUrl(filename);
-          await supabase.from("ocorrencia_anexos").insert({
-            ocorrencia_id: occurrenceId,
-            url_anexo: urlData.publicUrl,
-            tipo: "ASSINATURA",
-          });
+        // Upload de imagens
+        if (images.length > 0) {
+          await uploadImages(images, String(occurrenceId));
         }
+
+        // Upload da assinatura
+        if (signatureText) {
+          const content = signatureText.replace("data:image/png;base64,", "");
+          const buffer = Uint8Array.from(atob(content), (c) => c.charCodeAt(0));
+          const filename = `assinaturas/${occurrenceId}-${Date.now()}.png`;
+
+          const { error } = await supabase.storage
+            .from("anexos")
+            .upload(filename, buffer, { contentType: "image/png" });
+
+          if (!error) {
+            const { data: urlData } = supabase.storage
+              .from("anexos")
+              .getPublicUrl(filename);
+
+            await supabase.from("ocorrencia_anexos").insert({
+              ocorrencia_id: occurrenceId,
+              url_anexo: urlData.publicUrl,
+              tipo: "ASSINATURA",
+            });
+          }
+        }
+
+        Toast.show({
+          type: "success",
+          text1: "Sucesso",
+          text2: "Ocorrência registrada com sucesso",
+        });
+      } else {
+        // MODO OFFLINE: salva local e enfileira para sync
+        await salvarOcorrenciaOffline({
+          id: occurrenceId,
+          titulo: values.type,
+          descricao: values.description,
+          regiao: values.region,
+          tipo: values.type,
+          status: "ABERTA",
+          latitude: gps?.lat ?? 0,
+          longitude: gps?.lon ?? 0,
+          dataCriacao: new Date().toISOString(),
+          viatura_id: values.vehicle ? Number(values.vehicle) : null,
+          equipe_id: values.team ? Number(values.team) : null,
+        });
+        console.log("💾 [SQLite] Salvando ocorrência offline:", dados);
+
+        await adicionarPendencia("CRIAR_OCORRENCIA", {
+          ...dados,
+          imagens: images,
+          assinatura: signatureText || null,
+        });
+
+        Toast.show({
+          type: "info",
+          text1: "Modo Offline",
+          text2: "Ocorrência salva localmente e será sincronizada depois.",
+        });
       }
 
-      Toast.show({
-        type: "success",
-        text1: "Sucesso",
-        text2: "Ocorrência registrada com sucesso",
-      });
-
+      // Redireciona
       setTimeout(() => {
         router.push({
           pathname: "/occurrences/fluxo-de-ocorrencias",
@@ -165,10 +231,34 @@ export default function CreateOccurrenceScreen() {
     );
   }
 
+  // regra simples pro botão: online precisa estar válido; offline pode só exigir tipo/descrição/região
+  const canSubmit =
+    !submitting &&
+    ((online && formik.isValid) ||
+      (!online &&
+        formik.values.type &&
+        formik.values.region &&
+        formik.values.description));
+
   return (
     <>
       <ProtectedRoute allowedRoles={["OPERADOR", "CHEFE", "ADMIN"]}>
         <HeaderSection onBack={() => router.push("/(tabs)/occurrences")} />
+
+        {!online && (
+          <View
+            style={{
+              padding: 10,
+              backgroundColor: "#ffddcc",
+              margin: 10,
+              borderRadius: 3,
+            }}
+          >
+            <Text style={{ color: "#a33" }}>
+              Você está offline. Viaturas e equipes não estão disponíveis.
+            </Text>
+          </View>
+        )}
 
         {showSignatureModal && (
           <Modal visible animationType="slide">
@@ -247,12 +337,10 @@ export default function CreateOccurrenceScreen() {
               <TouchableOpacity
                 style={[
                   styles.submitButton,
-                  !formik.isValid || submitting
-                    ? styles.submitButtonDisabled
-                    : null,
+                  !canSubmit ? styles.submitButtonDisabled : null,
                 ]}
                 onPress={() => formik.handleSubmit()}
-                disabled={!formik.isValid || submitting}
+                disabled={!canSubmit}
               >
                 {submitting ? (
                   <ActivityIndicator color="#fff" />
@@ -264,7 +352,6 @@ export default function CreateOccurrenceScreen() {
           </ScrollView>
         </View>
       </ProtectedRoute>
-
       <Toast />
     </>
   );

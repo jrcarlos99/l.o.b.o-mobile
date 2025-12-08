@@ -1,38 +1,41 @@
-import axios from "axios";
+import { safeAxios } from "@/utils/safeAxios";
 
 const API_BASE_URL = "https://usuarios-service-2e2t.onrender.com";
 
 export async function login(email: string, senha: string): Promise<string> {
-  try {
-    const response = await axios.post(`${API_BASE_URL}/auth/login`, {
-      email,
-      senha,
-    });
+  const response = await safeAxios({
+    url: `${API_BASE_URL}/auth/login`,
+    method: "POST",
+    data: { email, senha },
+  });
 
-    return response.data.token;
-  } catch (error: any) {
-    console.error("Erro no login:", error.response?.data || error.message);
+  if (response.offline) {
+    throw new Error("Sem internet para fazer login");
+  }
+
+  if (!response.ok) {
+    console.error("Erro no login:", response);
     throw new Error("Credenciais inválidas");
   }
+
+  return response.data.token;
 }
 
-/**
- * Busca o usuário logado usando o token JWT
- */
 export async function getCurrentUser(token: string) {
-  try {
-    const response = await axios.get(`${API_BASE_URL}/usuarios/me`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+  const response = await safeAxios({
+    url: `${API_BASE_URL}/usuarios/me`,
+    method: "GET",
+    headers: { Authorization: `Bearer ${token}` },
+  });
 
-    return response.data;
-  } catch (error: any) {
-    console.error(
-      "Erro ao buscar usuário:",
-      error.response?.data || error.message
-    );
+  if (response.offline) {
+    throw new Error("Sem internet para carregar usuário");
+  }
+
+  if (!response.ok) {
+    console.error("Erro ao buscar usuário:", response);
     throw new Error("Não foi possível carregar os dados do usuário");
   }
+
+  return response.data;
 }

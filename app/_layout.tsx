@@ -15,10 +15,11 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useAuthStore } from "@/store/authStore";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { initializeDatabase } from "@/src/database/database";
 import { tentarSincronizar } from "@/src/database/repositories/syncRepository";
+import { ActivityIndicator, View } from "react-native";
 
 export const unstable_settings = {
   anchor: "(tabs)",
@@ -34,32 +35,39 @@ export default function RootLayout() {
   const token = useAuthStore((s) => s.token);
   const hydrated = useAuthStore((s) => s._hasHydrated);
 
-  // Inicializa o banco local (SQLite)
+  const [dbReady, setDbReady] = useState(false);
+
   useEffect(() => {
-    initializeDatabase();
+    const init = async () => {
+      console.log("🔧 Inicializando banco SQLite...");
+      await initializeDatabase();
+      console.log("✅ Banco SQLite pronto!");
+      setDbReady(true);
+    };
+
+    init();
   }, []);
 
-  // loop de sincronização automática
   useEffect(() => {
+    if (!dbReady) return;
+
     const interval = setInterval(() => {
       tentarSincronizar();
-    }, 15000); // 15 segundos
+    }, 15000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [dbReady]);
 
-  //  Carrega token ao abrir o app
   useEffect(() => {
     initializeAuth();
   }, []);
 
-  // Aguarda Zustand + RootLayout
   const isReady = rootNavigationState?.key != null && hydrated;
 
   const hasNavigated = useRef(false);
 
   useEffect(() => {
-    if (!isReady) return;
+    if (!isReady || !dbReady) return;
 
     const current = segments[0] ?? "";
 
@@ -71,20 +79,26 @@ export default function RootLayout() {
 
     if (hasNavigated.current) return;
 
-    //  Sem token → login
     if (!token && !isAuthRoute) {
       hasNavigated.current = true;
       router.replace("/login");
       return;
     }
 
-    //  Com token → redireciona para tabs
     if (token && isAuthRoute) {
       hasNavigated.current = true;
       router.replace("/(tabs)/occurrences");
       return;
     }
-  }, [isReady, token, segments]);
+  }, [isReady, dbReady, token, segments]);
+
+  if (!dbReady) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#6C2020" />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaProvider>

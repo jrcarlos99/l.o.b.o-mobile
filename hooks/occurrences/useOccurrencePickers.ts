@@ -1,3 +1,4 @@
+import { temInternet } from "@/src/database/repositories/syncRepository";
 import { useAuthStore } from "@/store/authStore";
 import { supabase } from "@/utils/supabase";
 import { useEffect, useState } from "react";
@@ -24,9 +25,20 @@ export const useOccurrencePickers = () => {
     if (!hydrated || !token) return;
 
     const loadPickersData = async () => {
-      try {
-        setLoadingPickers(true);
+      setLoadingPickers(true);
 
+      const online = await temInternet();
+
+      // ✅ SEM INTERNET → NÃO TENTA BUSCAR NO SUPABASE
+      if (!online) {
+        console.log("🚫 Offline → viaturas e equipes não carregadas");
+        setViaturaItems([]);
+        setEquipeItems([]);
+        setLoadingPickers(false);
+        return;
+      }
+
+      try {
         const [viaturaRes, equipeRes] = await Promise.all([
           fetchViaturas(),
           fetchEquipes(),

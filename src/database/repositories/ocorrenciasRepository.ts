@@ -1,36 +1,48 @@
 import { executeSqlAsync } from "../database";
 
-// Tipo da ocorrência offline
 export interface OcorrenciaOffline {
   id?: number;
   titulo: string;
   descricao?: string;
   status: string;
+  regiao: string | null;
   dataCriacao: string;
-  sincronizado?: number; // 0 = não sincronizado, 1 = sincronizado
+  tipo: string;
+  latitude?: number;
+  longitude?: number;
+  sincronizado?: number;
+  viatura_id?: number | null;
+  equipe_id?: number | null;
 }
 
-// Salvar uma ocorrência offline
+// ✅ Salvar ocorrência offline
 export const salvarOcorrenciaOffline = async (
   ocorrencia: OcorrenciaOffline
 ) => {
   const sql = `
     INSERT INTO ocorrencias_offline 
-    (titulo, descricao, status, dataCriacao, sincronizado)
-    VALUES (?, ?, ?, ?, 0)
+    (id, titulo, descricao, tipo, regiao, status, latitude, longitude, dataCriacao, viatura_id, equipe_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
   const params = [
+    ocorrencia.id,
     ocorrencia.titulo,
     ocorrencia.descricao ?? "",
+    ocorrencia.tipo,
+    ocorrencia.regiao,
     ocorrencia.status,
+    ocorrencia.latitude ?? 0,
+    ocorrencia.longitude ?? 0,
     ocorrencia.dataCriacao,
+    ocorrencia.viatura_id ?? null,
+    ocorrencia.equipe_id ?? null,
   ];
 
   return await executeSqlAsync(sql, params);
 };
 
-// Listar todas as ocorrências offline
+// ✅ Listar todas as ocorrências offline
 export const listarOcorrenciasOffline = async (): Promise<
   OcorrenciaOffline[]
 > => {
@@ -38,27 +50,25 @@ export const listarOcorrenciasOffline = async (): Promise<
 
   const result: any = await executeSqlAsync(sql);
 
-  const rows = result.rows._array ?? [];
+  const rows = result.rows ?? [];
 
   return rows as OcorrenciaOffline[];
 };
 
-// Buscar uma ocorrência offline por ID
-export const buscarOcorrenciaOffline = async (
-  id: number
-): Promise<OcorrenciaOffline | null> => {
+// ✅ Buscar ocorrência offline por ID
+export const buscarOcorrenciaOffline = async (id: number) => {
   const sql = `SELECT * FROM ocorrencias_offline WHERE id = ?`;
 
   const result: any = await executeSqlAsync(sql, [id]);
 
-  if (result.rows.length > 0) {
-    return result.rows.item(0) as OcorrenciaOffline;
+  if (result.rows && result.rows.length > 0) {
+    return result.rows[0] as OcorrenciaOffline;
   }
 
   return null;
 };
 
-// Marcar ocorrência como sincronizada
+// ✅ Marcar como sincronizada
 export const marcarComoSincronizada = async (id: number) => {
   const sql = `
     UPDATE ocorrencias_offline
@@ -69,7 +79,7 @@ export const marcarComoSincronizada = async (id: number) => {
   return await executeSqlAsync(sql, [id]);
 };
 
-// Atualizar ocorrência offline (caso o usuário edite antes de sincronizar)
+// ✅ Atualizar ocorrência offline
 export const atualizarOcorrenciaOffline = async (
   id: number,
   dados: Partial<OcorrenciaOffline>
@@ -77,19 +87,34 @@ export const atualizarOcorrenciaOffline = async (
   const campos = [];
   const valores: any[] = [];
 
-  if (dados.titulo) {
+  if (dados.titulo !== undefined) {
     campos.push("titulo = ?");
     valores.push(dados.titulo);
   }
 
-  if (dados.descricao) {
+  if (dados.descricao !== undefined) {
     campos.push("descricao = ?");
     valores.push(dados.descricao);
   }
 
-  if (dados.status) {
+  if (dados.status !== undefined) {
     campos.push("status = ?");
     valores.push(dados.status);
+  }
+
+  if (dados.tipo !== undefined) {
+    campos.push("tipo = ?");
+    valores.push(dados.tipo);
+  }
+
+  if (dados.latitude !== undefined) {
+    campos.push("latitude = ?");
+    valores.push(dados.latitude);
+  }
+
+  if (dados.longitude !== undefined) {
+    campos.push("longitude = ?");
+    valores.push(dados.longitude);
   }
 
   if (campos.length === 0) return;
@@ -105,14 +130,14 @@ export const atualizarOcorrenciaOffline = async (
   return await executeSqlAsync(sql, valores);
 };
 
-// Deletar ocorrência offline (após sincronizar)
+// ✅ Deletar ocorrência offline
 export const deletarOcorrenciaOffline = async (id: number) => {
   const sql = `DELETE FROM ocorrencias_offline WHERE id = ?`;
 
   return await executeSqlAsync(sql, [id]);
 };
 
-// Listar ocorrências pendentes de sincronização
+// ✅ Listar pendentes de sincronização
 export const listarPendentes = async (): Promise<OcorrenciaOffline[]> => {
   const sql = `
     SELECT * FROM ocorrencias_offline
@@ -122,5 +147,5 @@ export const listarPendentes = async (): Promise<OcorrenciaOffline[]> => {
 
   const result: any = await executeSqlAsync(sql);
 
-  return result.rows._array ?? [];
+  return result.rows ?? [];
 };

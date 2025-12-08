@@ -2,12 +2,12 @@ import { executeSqlAsync } from "../database";
 
 export interface PendingAction {
   id: number;
-  tipo: string; // ex: "CRIAR_OCORRENCIA", "ATUALIZAR_OCORRENCIA"
-  payload: any; // JSON com os dados da ação
+  tipo: string;
+  payload: any;
   dataCriacao: string;
 }
 
-// Adicionar ação à fila
+// ✅ Adicionar ação à fila
 export const adicionarPendencia = async (tipo: string, payload: any) => {
   const sql = `
     INSERT INTO pending_queue (tipo, payload, dataCriacao)
@@ -19,13 +19,13 @@ export const adicionarPendencia = async (tipo: string, payload: any) => {
   return await executeSqlAsync(sql, params);
 };
 
-// Listar todas as pendências
+// ✅ Listar pendências
 export const listarPendencias = async (): Promise<PendingAction[]> => {
   const sql = `SELECT * FROM pending_queue ORDER BY id ASC`;
 
   const result: any = await executeSqlAsync(sql);
 
-  const rows = result.rows._array ?? [];
+  const rows = result.rows ?? [];
 
   return rows.map((row: any) => ({
     ...row,
@@ -33,14 +33,14 @@ export const listarPendencias = async (): Promise<PendingAction[]> => {
   }));
 };
 
-// Remover pendência após sincronizar
+// ✅ Remover pendência
 export const removerPendencia = async (id: number) => {
   const sql = `DELETE FROM pending_queue WHERE id = ?`;
 
   return await executeSqlAsync(sql, [id]);
 };
 
-// Limpar todas as pendências (opcional)
+// ✅ Limpar pendências
 export const limparPendencias = async () => {
   const sql = `DELETE FROM pending_queue`;
 
