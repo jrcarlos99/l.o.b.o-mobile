@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "1070528600504",
-    "project_id": "lobo-2a79d",
-    "storage_bucket": "lobo-2a79d.firebasestorage.app"
+    "project_number": "",
+    "project_id": "",
+    "storage_bucket": ""
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1070528600504:android:349638c9a62f02706b174d",
+        "mobilesdk_app_id": "",
         "android_client_info": {
-          "package_name": "com.anonymous.mobilel.o.b.o"
+          "package_name": ""
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyB43-pX_XKHTio3q1NzNdoag8X12yiKKso"
+          "current_key": ""
         }
       ],
       "services": {
