@@ -1,163 +1,146 @@
-# mobile-l.o.b.o
+# l.o.b.o-mobile
 
-README em português para o projeto React Native / Expo contido neste repositório.
+Aplicativo mobile (React Native + Expo Router) com TypeScript para o projeto L.O.B.O.
 
-## Visão geral
+![Expo](https://img.shields.io/badge/Expo-000000?style=for-the-badge&logo=expo&logoColor=white)
+![React Native](https://img.shields.io/badge/React%20Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white)
+![ESLint](https://img.shields.io/badge/ESLint-4B32C3?style=for-the-badge&logo=eslint&logoColor=white)
+![Prettier](https://img.shields.io/badge/Prettier-F7B93E?style=for-the-badge&logo=prettier&logoColor=white)
 
-Este repositório contém um aplicativo mobile desenvolvido com Expo e TypeScript. Ele usa a estrutura padrão de pastas "app/" para telas e componentes reutilizáveis em `components/` e utilitários em `hooks/` e `constants/`.
+Este README foi atualizado para refletir as mudanças realizadas até Dez/2025, com foco na refatoração completa do módulo de Ocorrências e melhorias na estrutura do projeto.
 
-Principais tecnologias:
+## Visão Geral
 
-- Expo (React Native)
-- TypeScript
+- Expo (React Native) + TypeScript
+- Router baseado em arquivos (pasta `app/`)
+- Módulo de Ocorrências totalmente reestruturado, integrado ao Supabase (PostgreSQL + Storage)
+- Componentização, validação com Yup e gerenciamento de formulários com Formik
 
 ## Pré-requisitos
 
-- Node.js (recomenda-se uma versão LTS moderna — por exemplo, 18+). Verifique com `node -v`.
-- npm ou yarn
-- Expo CLI (usa-se via npx, não é obrigatório instalar globalmente)
-- Para rodar em emuladores: Android Studio / Xcode (macOS) ou dispositivos físicos com Expo Go.
+- Node.js LTS (recomendado 18+). Verifique com `node -v`.
+- npm (ou yarn)
+- Android Studio (emulador) e/ou dispositivo físico com Expo Go
+- Credenciais/variáveis de ambiente para Supabase (se aplicável)
 
 ## Instalação
 
-Abra um terminal (PowerShell no Windows) na raiz do projeto e execute:
-
 ```powershell
-# instalar dependências
 npm install
-# ou, se preferir yarn
-# yarn install
 ```
 
-## Como executar (desenvolvimento)
-
-Inicie o servidor Metro / Expo:
+## Executar em Desenvolvimento
 
 ```powershell
+# iniciar servidor Expo com limpeza de cache
 npx expo start -c
-```
 
-Isso abrirá a interface do Expo DevTools no navegador. Você pode então:
-
-- Escanear o QR code com o aplicativo Expo Go (iOS/Android).
-- Rodar em um emulador Android conectado:
-
-```powershell
+# rodar no emulador Android
 npx expo run:android
-```
 
-- Rodar em um simulador iOS (macOS):
-
-```powershell
+# (macOS) rodar no simulador iOS
 npx expo run:ios
 ```
 
-Observações:
+## Ambiente (variáveis necessárias)
 
-- Para limpar caches, use `-c` no `expo start` como mostrado.
-- Se houver problemas de rede com o Expo (por exemplo, falha de conexão à API do Expo), verifique variáveis de proxy, firewall e a versão do Node.
+Defina variáveis de ambiente para que as integrações funcionem corretamente. Não inclua seus valores neste README.
 
-## Estrutura do projeto (resumo)
+- `SUPABASE_URL` — URL do seu projeto Supabase
+- `SUPABASE_ANON_KEY` — chave pública (anon) do Supabase
+- Outras variáveis específicas do projeto podem ser necessárias conforme os serviços em `services/`.
 
-- `app/` — telas e rotas do aplicativo (contém layouts e a navegação por tabs).
-  - `_layout.tsx`, `modal.tsx`
-  - `(tabs)/` — telas das abas: `create.tsx`, `index.tsx`, `occurrences.tsx`, `reports.tsx`, `settings.tsx`
-- `components/` — componentes reutilizáveis (e.g. `themed-text.tsx`, `themed-view.tsx`, `ui/`)
-- `data/` — mocks e dados locais (`ocorrenciasMock.ts`)
-- `assets/` — imagens e outros recursos estáticos
-- `constants/` — temas e constantes (`theme.ts`)
-- `hooks/` — hooks personalizados (e.g. `use-theme-color.ts`)
-- `scripts/` — scripts utilitários (ex: `reset-project.js`)
+Exemplo de arquivo `.env` (apenas como referência, sem valores reais):
 
-Arquivos de configuração:
+```bash
+# .env
+SUPABASE_URL=
+SUPABASE_ANON_KEY=
+```
 
-- `app.json` — configuração do Expo
-- `tsconfig.json` — configuração TypeScript
-- `package.json` — scripts e dependências
+## Scripts Úteis (`package.json`)
 
-## Convenções e notas de desenvolvimento
+- `reset-project`: reorganiza o projeto de exemplo para uma estrutura limpa
+- Outros scripts padrão do Expo podem estar disponíveis; veja `package.json`
 
-- O projeto é escrito em TypeScript; ao adicionar código, mantenha tipagens claras.
-- Components reutilizáveis ficam em `components/` e componentes de interface em `components/ui/`.
-- Preferir hooks existentes (`hooks/`) quando possível.
+## Principais Mudanças (desde a criação do README)
 
-## Troubleshooting rápido
+- Refatoração completa do módulo de Ocorrências com arquitetura modular
+- Criação de 12 arquivos novos (components, hooks, validation, utils)
+- Adição das dependências: `formik` e `react-native-toast-message`
+- Validação centralizada com Yup e formulários com Formik
+- Upload de imagens e assinaturas via Supabase Storage
+- Integração com tabelas `ocorrencias` e `ocorrencia_anexos`
 
-- Expo não conecta / falha na API: verifique proxy, variáveis de ambiente `HTTP_PROXY`/`HTTPS_PROXY`, e a versão do Node.
-- Erros de TypeScript: execute `npx tsc --noEmit` para checar rapidamente.
-- Cache estranho do Metro: reinicie com `npx expo start -c`.
+Para detalhes, consulte `RELATORIO_ALTERACOES.md` e `SUMARIO_EXECUTIVO.md`.
 
-## Tests / Lint
+## Estrutura do Projeto (atualizada)
 
-Este repositório não contém testes automatizados nem configuração de linting explícita por padrão (ou estão fora do escopo deste README). Considere adicionar ESLint e testes unitários para componentes críticos.
+- `app/`
+  - `_layout.tsx` (layout global)
+  - `index.tsx`, `login.tsx`, `dashboard.tsx`, etc.
+  - `occurrences/`
+    - `_layout.tsx` (Stack)
+    - `create.tsx` (tela principal de registro de ocorrência)
+- `components/`
+  - `occurrences/`
+    - `HeaderSection.tsx`, `FormSection.tsx`, `ImageSection.tsx`, `SignatureSection.tsx`, `index.ts`
+  - `ui/`, `Header/`, `occurrence/`, etc.
+- `hooks/`
+  - `occurrences/`
+    - `useOccurrencePickers.ts`, `useOccurrenceUploads.ts`, `index.ts`
+  - Autenticação, GPS, Permissões, Foto, Vídeo, etc.
+- `validation/`
+  - `occurrences/`
+    - `occurrenceSchema.ts`, `index.ts`
+- `utils/`
+  - `uploadImageToSupabase.ts`, `supabase.ts`
+- `services/` (auth, occurrences, dashboard, notification)
+- `store/` (estado de autenticação, etc.)
+- `styles/` (estilos por módulo e telas)
+- `schema/` (schemas por tipo de ocorrência)
+- `scripts/` (`reset-project.js`, `notifications.ts`)
+
+## Ocorrências: Fluxo e Arquitetura
+
+- Orquestração na tela `app/occurrences/create.tsx`
+- Componentes estruturados: Header, Form, Imagens, Assinatura
+- Hooks dedicados:
+  - `useOccurrencePickers`: carrega viaturas/equipes em paralelo
+  - `useOccurrenceUploads`: upload de imagens e assinatura
+- Validação: `validation/occurrences/occurrenceSchema.ts`
+- Persistência: Supabase (DB e Storage bucket `anexos`)
+
+## Dependências Adicionadas
+
+- `formik` — gerenciamento de formulários
+- `react-native-toast-message` — feedback de UI não-bloqueante
+
+Instalação já coberta por `npm install`.
+
+## Convenções
+
+- TypeScript em todo o app; mantenha tipagens consistentes
+- Componentes reutilizáveis em `components/` e estilos em `styles/`
+- Hooks para lógica reutilizável em `hooks/`
+
+## Checklist de Primeiro Uso
+
+- Instalar dependências: `npm install`
+- Configurar variáveis de ambiente (sem expor valores): `SUPABASE_URL`, `SUPABASE_ANON_KEY`
+- Executar: `npx expo start -c`
+- Testar fluxo de Ocorrências na tela `app/occurrences/create.tsx`
+
+## Troubleshooting
+
+- Expo sem conectar: verifique firewall/proxy (`HTTP_PROXY`/`HTTPS_PROXY`) e versão do Node
+- TypeScript: `npx tsc --noEmit` para checagem rápida
+- Metro cache: `npx expo start -c`
 
 ## Contribuição
 
-1. Abra uma issue descrevendo a mudança/bug.
-2. Crie um branch com um nome descritivo.
-3. Envie um PR descrevendo a alteração e testes (se aplicável).
-
-## Licença
-
-Este projeto não contém uma licença explícita no repositório. Se você controla este código, adicione um arquivo `LICENSE` (por exemplo, MIT) ou atualize este README para indicar a licença apropriada.
-
----
-
-Se quiser, posso:
-
-- incluir comandos/tarefas do `package.json` (se você me mostrar o `package.json`).
-- adicionar instruções de CI, lint e testes.
-- traduzir para inglês ou gerar uma versão curta para abertura no GitHub.
-
-Atualizei o arquivo `README.md` com estas informações.
-
-# Welcome to your Expo app 👋
-
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
-
-## Get started
-
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- Abra uma issue descrevendo a mudança/bug
+- Crie um branch descritivo
+- Envie um PR com descrição e evidências (prints/logs)
