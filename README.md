@@ -7,7 +7,6 @@ Aplicativo mobile (React Native + Expo Router) com TypeScript para o projeto L.O
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white)
 ![ESLint](https://img.shields.io/badge/ESLint-4B32C3?style=for-the-badge&logo=eslint&logoColor=white)
-![Prettier](https://img.shields.io/badge/Prettier-F7B93E?style=for-the-badge&logo=prettier&logoColor=white)
 
 Este README foi atualizado para refletir as mudanças realizadas até Dez/2025, com foco na refatoração completa do módulo de Ocorrências e melhorias na estrutura do projeto.
 

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1070528600504",
+    "project_id": "lobo-2a79d",
+    "storage_bucket": "lobo-2a79d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1070528600504:android:349638c9a62f02706b174d",
+        "android_client_info": {
+          "package_name": "com.anonymous.mobilel.o.b.o"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB43-pX_XKHTio3q1NzNdoag8X12yiKKso"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
