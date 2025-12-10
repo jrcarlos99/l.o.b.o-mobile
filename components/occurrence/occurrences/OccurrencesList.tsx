@@ -48,7 +48,6 @@ export function OccurrencesList({
   onSelect,
 }: Props) {
   const grouped = groupByMonth(data);
-
   return (
     <SectionList
       sections={grouped}
@@ -66,7 +65,7 @@ export function OccurrencesList({
       }}
       onEndReachedThreshold={0.5}
       ListFooterComponent={
-        loading ? (
+        loading && hasMore ? (
           <ActivityIndicator
             size="small"
             color="#6C2020"

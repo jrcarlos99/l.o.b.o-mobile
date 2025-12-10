@@ -97,6 +97,12 @@ export default function Index() {
     [adminOrChefe]
   );
 
+  console.log(
+    "[AUTH DEBUG] User Role da Store:",
+    user?.perfil,
+    "| adminOrChefe:",
+    adminOrChefe
+  );
   const handleFilters = useCallback(async () => {
     try {
       if (!hydrated || !token) return;
@@ -127,6 +133,13 @@ export default function Index() {
           : isChefe()
           ? "CHEFE"
           : user?.perfil ?? "OPERADOR";
+
+        console.log(
+          `[DASHBOARD FETCH] Enviando Role: ${role} | Token começa com: ${token?.substring(
+            0,
+            10
+          )}...`
+        );
 
         stats = await fetchDashboardStats(token, effectiveFilters, role);
 

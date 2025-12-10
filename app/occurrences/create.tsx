@@ -33,6 +33,9 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
+// ✅ NOVO: Importar a função de notificação
+import { sendLocalOccurrenceCreationNotification } from "@/services/notification";
+
 type FormValues = {
   type: string;
   region: string;
@@ -57,18 +60,16 @@ export default function CreateOccurrenceScreen() {
 
   const { gps } = useGPS();
   const insets = useSafeAreaInsets();
-  const customBottomPadding = insets.bottom + 75 + 10;
+  const customBottomPadding = insets.bottom + 75 + 10; // Detecta internet ao abrir a tela
 
-  // Detecta internet ao abrir a tela
   useEffect(() => {
     const check = async () => {
       const status = await temInternet();
       setOnline(status);
     };
     check();
-  }, []);
+  }, []); // Formik (sem context, simples)
 
-  // Formik (sem context, simples)
   const formik = useFormik<FormValues>({
     initialValues: {
       type: "",
@@ -85,9 +86,8 @@ export default function CreateOccurrenceScreen() {
     onSubmit: async (values) => {
       await handleSubmit(values);
     },
-  });
+  }); // Selecionar imagem
 
-  // Selecionar imagem
   const handleAddImage = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -108,9 +108,8 @@ export default function CreateOccurrenceScreen() {
 
   const handleRemoveImage = (index: number) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
-  };
+  }; // SUBMIT (online + offline)
 
-  // SUBMIT (online + offline)
   const handleSubmit = async (values: FormValues) => {
     try {
       setSubmitting(true);
@@ -139,14 +138,12 @@ export default function CreateOccurrenceScreen() {
           .from("ocorrencia")
           .insert(dados);
 
-        if (insertError) throw insertError;
+        if (insertError) throw insertError; // Upload de imagens
 
-        // Upload de imagens
         if (images.length > 0) {
           await uploadImages(images, String(occurrenceId));
-        }
+        } // Upload da assinatura
 
-        // Upload da assinatura
         if (signatureText) {
           const content = signatureText.replace("data:image/png;base64,", "");
           const buffer = Uint8Array.from(atob(content), (c) => c.charCodeAt(0));
@@ -168,6 +165,9 @@ export default function CreateOccurrenceScreen() {
             });
           }
         }
+
+        // ✅ Dispara notificação no modo online
+        await sendLocalOccurrenceCreationNotification(dados as any);
 
         Toast.show({
           type: "success",
@@ -197,14 +197,16 @@ export default function CreateOccurrenceScreen() {
           assinatura: signatureText || null,
         });
 
+        // ✅ Dispara notificação no modo offline
+        await sendLocalOccurrenceCreationNotification(dados as any);
+
         Toast.show({
           type: "info",
           text1: "Modo Offline",
           text2: "Ocorrência salva localmente e será sincronizada depois.",
         });
-      }
+      } // Redireciona
 
-      // Redireciona
       setTimeout(() => {
         router.push({
           pathname: "/occurrences/fluxo-de-ocorrencias",
@@ -229,9 +231,8 @@ export default function CreateOccurrenceScreen() {
         <ActivityIndicator size="large" color="#6C2020" />
       </View>
     );
-  }
+  } // regra simples pro botão: online precisa estar válido; offline pode só exigir tipo/descrição/região
 
-  // regra simples pro botão: online precisa estar válido; offline pode só exigir tipo/descrição/região
   const canSubmit =
     !submitting &&
     ((online && formik.isValid) ||
@@ -244,7 +245,6 @@ export default function CreateOccurrenceScreen() {
     <>
       <ProtectedRoute allowedRoles={["OPERADOR", "CHEFE", "ADMIN"]}>
         <HeaderSection onBack={() => router.push("/(tabs)/occurrences")} />
-
         {!online && (
           <View
             style={{
@@ -259,7 +259,6 @@ export default function CreateOccurrenceScreen() {
             </Text>
           </View>
         )}
-
         {showSignatureModal && (
           <Modal visible animationType="slide">
             <View style={{ flex: 1 }}>
@@ -269,6 +268,7 @@ export default function CreateOccurrenceScreen() {
               >
                 <Text style={{ color: "red", fontSize: 16 }}>Fechar</Text>
               </TouchableOpacity>
+
               <SignaturePad
                 onOK={(sig) => {
                   setSignatureText(sig);
@@ -279,7 +279,6 @@ export default function CreateOccurrenceScreen() {
             </View>
           </Modal>
         )}
-
         <View style={{ flex: 1, paddingBottom: customBottomPadding }}>
           <ScrollView
             style={styles.container}
@@ -297,7 +296,6 @@ export default function CreateOccurrenceScreen() {
               viaturaItems={viaturaItems}
               equipeItems={equipeItems}
             />
-
             <FormField label="Localização">
               <LocationButton
                 onPress={() => {

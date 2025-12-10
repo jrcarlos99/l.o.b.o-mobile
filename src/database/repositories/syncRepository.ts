@@ -82,11 +82,9 @@ export const sincronizarPendencias = async () => {
 };
 
 export const temInternet = async (): Promise<boolean> => {
-  console.log("🔍 [temInternet] Iniciando verificação...");
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => {
-      console.log("⏳ [temInternet] Timeout disparado");
       controller.abort();
     }, 3000); // 3s timeout
 
@@ -96,7 +94,7 @@ export const temInternet = async (): Promise<boolean> => {
     });
 
     clearTimeout(timeout);
-    console.log("✅ [temInternet] Resultado:", response.ok);
+
     return response.ok;
   } catch (err) {
     console.log("❌ [temInternet] Erro:", err);

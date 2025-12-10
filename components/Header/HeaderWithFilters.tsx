@@ -3,7 +3,7 @@ import { normalizeRegionFilter } from "@/utils/normalizeRegionFilter";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
 import { useEffect, useState } from "react";
-import { Alert, Platform, Text, View } from "react-native";
+import { Platform, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AvatarMenu from "./AvatarMenu";
 import HeaderBase from "./HeaderBase";
@@ -136,9 +136,7 @@ export default function HeaderWithFilters({
         avatarUrl={user?.avatar_url ?? "https://placehold.co/100x100/png"}
         formattedDate={formattedDate}
         onDatePress={() => setShowDatePicker(true)}
-        onNotificationsPress={() =>
-          Alert.alert("Notificações", "Sem novas notificações!")
-        }
+        onNotificationsPress={() => router.push("/notifications")}
         onAvatarPress={() => setAvatarMenuVisible(true)}
         onLogoPress={() => router.push("/")}
       />

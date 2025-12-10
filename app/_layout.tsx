@@ -19,10 +19,34 @@ import { useEffect, useRef, useState } from "react";
 
 import { initializeDatabase } from "@/src/database/database";
 import { tentarSincronizar } from "@/src/database/repositories/syncRepository";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, Platform, View } from "react-native";
+
+import messaging from "@react-native-firebase/messaging";
+// import safeAxios from "@/services/safeAxios"; // Assumindo que você tem um serviço de API
 
 export const unstable_settings = {
   anchor: "(tabs)",
+};
+
+// 🔑 Função que você precisa adaptar para enviar o token ao seu Backend
+const registerFCMToken = async (fcmToken: string) => {
+  if (!fcmToken) return;
+  console.log("FCM Token obtido:", fcmToken);
+
+  // ⚠️ SUBSTITUA COM SUA CHAMADA DE API REAL PARA O BACKEND
+  // Exemplo usando um serviço que requer autenticação (safeAxios):
+  /*
+  try {
+    const response = await safeAxios.post('/user/register-push-token', {
+      token: fcmToken,
+    });
+    console.log("Token FCM registrado com sucesso no Backend.");
+  } catch (error) {
+    console.error("Falha ao registrar token FCM no Backend:", error);
+  }
+  */
+
+  // Mantenha este console.log se não tiver a API pronta para ver o token no console
 };
 
 export default function RootLayout() {
@@ -39,9 +63,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     const init = async () => {
-      console.log("🔧 Inicializando banco SQLite...");
       await initializeDatabase();
-      console.log("✅ Banco SQLite pronto!");
       setDbReady(true);
     };
 
@@ -63,7 +85,6 @@ export default function RootLayout() {
   }, []);
 
   const isReady = rootNavigationState?.key != null && hydrated;
-
   const hasNavigated = useRef(false);
 
   useEffect(() => {
@@ -91,6 +112,86 @@ export default function RootLayout() {
       return;
     }
   }, [isReady, dbReady, token, segments]);
+
+  // ⚙️ NOVO useEffect para inicialização e registro do FCM
+  useEffect(() => {
+    if (!token) {
+      return;
+    }
+
+    async function initFCM() {
+      try {
+        const authStatus = await messaging().requestPermission();
+        const enabled =
+          authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+          authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+
+        if (!enabled) {
+          console.log("Permissão de Notificação negada.");
+          return;
+        }
+
+        const fcmToken = await messaging().getToken();
+
+        // 🚀 Registra o token no seu Backend
+        await registerFCMToken(fcmToken);
+      } catch (err) {
+        console.log("Erro ao inicializar FCM:", err);
+      }
+    }
+
+    initFCM();
+
+    // Listener para notificação em FOREGROUND (App aberto)
+    const unsubscribeForeground = messaging().onMessage(
+      async (remoteMessage) => {
+        console.log(
+          "Notificação Push recebida em Foreground:",
+          remoteMessage.notification
+        );
+        // Você pode disparar um Toast aqui ou usar o expo-notifications para um alerta visual leve
+      }
+    );
+
+    return () => {
+      unsubscribeForeground();
+    };
+  }, [token]);
+
+  useEffect(() => {
+    if (Platform.OS === "android") {
+      messaging().setAutoInitEnabled(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = messaging().onNotificationOpenedApp((remoteMessage) => {
+      const occurrenceId = remoteMessage.data?.occurrenceId;
+
+      if (occurrenceId) {
+        const path = `/occurrences/edit/${occurrenceId}`;
+        router.push(path as any);
+      }
+    });
+    return unsubscribe;
+  }, []);
+
+  useEffect(() => {
+    messaging()
+      .getInitialNotification()
+      .then((remoteMessage) => {
+        if (!remoteMessage) return;
+
+        const occurrenceId = remoteMessage.data?.occurrenceId;
+
+        if (occurrenceId) {
+          setTimeout(() => {
+            const path = `/occurrences/edit/${occurrenceId}`;
+            router.push(path as any);
+          });
+        }
+      });
+  }, []);
 
   if (!dbReady) {
     return (

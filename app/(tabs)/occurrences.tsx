@@ -13,12 +13,12 @@ import {
 } from "@/types/OccurrenceType";
 import { supabase } from "@/utils/supabase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRootNavigationState, useRouter, useSegments } from "expo-router";
+import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Linking, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-//  IMPORTS DO MODO OFFLINE
+// IMPORTS DO MODO OFFLINE
 import {
   listarOcorrenciasOffline,
   OcorrenciaOffline,
@@ -31,6 +31,7 @@ export default function OccurrencesPage() {
   const [occurrences, setOccurrences] = useState<Occurrence[]>([]);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  // O 'loading' agora representa o estado geral, mas a lista permanece visível
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<OccurrenceFilters>({});
   const [selectedOccurrence, setSelectedOccurrence] =
@@ -73,7 +74,7 @@ export default function OccurrencesPage() {
     };
   }
 
-  // ✅ Atualiza filtros
+  // ✅ Atualiza filtros (Reseta a página para 0 e a lista)
   const updateFilters = useCallback((next: OccurrenceFilters) => {
     setFilters(next);
     setPage(0);
@@ -81,109 +82,70 @@ export default function OccurrencesPage() {
   }, []);
 
   // ✅ Carrega ocorrências (ONLINE + OFFLINE)
-  // ✅ Carrega ocorrências (ONLINE + OFFLINE)
   const loadOccurrences = useCallback(async () => {
-    console.log("🔄 [loadOccurrences] Iniciando carregamento...");
-    console.log("📄 [loadOccurrences] Filtros:", filters);
-    console.log("📄 [loadOccurrences] Página:", page);
-
     try {
       setLoading(true);
 
       const online = await temInternet();
-      console.log("🌐 [loadOccurrences] Online?", online);
-
       const offlinePendentes = await listarOcorrenciasOffline();
-      console.log(
-        "📦 [loadOccurrences] Offline encontradas:",
-        offlinePendentes.length
-      );
-
       const offlineMapped = offlinePendentes.map(mapOfflineToOccurrence);
 
       if (!online) {
-        console.log("📴 [loadOccurrences] Modo offline → exibindo SQLite");
         setOccurrences(offlineMapped);
         setHasMore(false);
         return;
       }
 
       const token = await AsyncStorage.getItem("token");
-      console.log("🔑 [loadOccurrences] Token existe?", !!token);
       if (!token) throw new Error("Token não encontrado");
 
       const data = await fetchOccurrences(token, filters, page, 20);
-      console.log("📡 [loadOccurrences] Resposta backend:", data);
 
       if (!data || !data.content) {
-        console.log(
-          "⚠️ [loadOccurrences] Sem dados do backend → usando offline"
-        );
         setOccurrences(offlineMapped);
         setHasMore(false);
         return;
       }
 
-      console.log(
-        "✅ [loadOccurrences] Conteúdo recebido:",
-        data.content.length
-      );
-
       setOccurrences((prev) => {
+        // 1. Merge dos dados
         const merged =
           page === 0
-            ? [...offlineMapped, ...data.content]
-            : [...prev, ...data.content];
+            ? [...offlineMapped, ...data.content] // Novo carregamento ou filtro
+            : [...prev, ...data.content]; // Paginação (append)
 
-        console.log("📊 [loadOccurrences] Total após merge:", merged.length);
-
+        // 2. Garante que não há duplicatas
         const unique = merged.filter(
           (item, index, self) =>
             index === self.findIndex((o) => o.id === item.id)
         );
 
-        return unique;
+        // 3. ORDENAÇÃO: Item mais novo primeiro (DECRESCENTE)
+        const sorted = unique.sort((a, b) => {
+          const dateA = new Date(a.dataHoraAbertura ?? 0).getTime();
+          const dateB = new Date(b.dataHoraAbertura ?? 0).getTime();
+          return dateB - dateA;
+        });
+
+        return sorted;
       });
 
       setHasMore(page + 1 < data.totalPages);
     } catch (error) {
+      console.warn("Erro ao carregar ocorrências:", error);
       Alert.alert("Erro", "Não foi possível carregar as ocorrências.");
-      console.log("❌ [loadOccurrences] Erro:", error);
     } finally {
-      console.log("✅ [loadOccurrences] Finalizado");
       setLoading(false);
     }
-  }, [filters, page]);
+  }, [filters, page]); // Dependências do useCallback
 
-  // ✅ Carrega ao montar a tela
+  // ✅ Único useEffect para iniciar e recarregar a lista
+  // Chama no mount (page=0) e em qualquer mudança de filters/page
   useEffect(() => {
-    console.log("🚀 [useEffect] Tela montada → carregando ocorrências");
     loadOccurrences();
-  }, []);
+  }, [loadOccurrences]);
 
-  // ✅ Recarrega quando filtros ou página mudam
-  useEffect(() => {
-    console.log("🔁 [useEffect] Filtros ou página mudaram → recarregando");
-    loadOccurrences();
-  }, [filters, page]);
-
-  // ✅ Recarrega quando filtros ou página mudam
-
-  const segments = useSegments();
-  const navigationState = useRootNavigationState();
-
-  useEffect(() => {
-    if (!navigationState?.key) return;
-
-    const current = segments.join("/");
-    console.log("📍 [ExpoRouter] Segmento atual:", current);
-
-    // Ajuste para o caminho real da sua tela
-    if (current === "(tabs)/occurrences") {
-      console.log("🎯 [ExpoRouter] Tela de ocorrências ativa → carregando...");
-      loadOccurrences();
-    }
-  }, [segments, navigationState, loadOccurrences]);
+  // 🔴 BLOCO REMOVIDO: O listener de navegação redundante (evita chamadas duplicadas)
 
   const handleLoadMore = () => {
     if (hasMore && !loading) {
@@ -191,7 +153,7 @@ export default function OccurrencesPage() {
     }
   };
 
-  // ✅ Carrega anexos
+  // ✅ Carrega anexos (Mantido)
   async function loadAnexos(occId: number) {
     const { data, error } = await supabase
       .from("ocorrencia_anexos")
@@ -199,14 +161,13 @@ export default function OccurrencesPage() {
       .eq("ocorrencia_id", occId);
 
     if (error) {
-      console.error("Erro ao carregar anexos:", error);
       return;
     }
 
     setSelectedOccurrenceAnexos(data ?? []);
   }
 
-  // ✅ Atualiza status
+  // ✅ Atualiza status (Mantido)
   async function updateOccurrenceStatus(id: number, status: string) {
     const { data, error } = await supabase
       .from("ocorrencia")
@@ -223,15 +184,20 @@ export default function OccurrencesPage() {
       return;
     }
 
+    // Se o status for atualizado, recarrega a lista para ordenar novamente
     setOccurrences((prev) => {
       const filtered = prev.filter((o) => o.id !== id);
-      return [data as Occurrence, ...filtered];
+      const updatedOccurrence = data as Occurrence;
+
+      // Adiciona o item atualizado e chama a ordenação via loadOccurrences
+      return [updatedOccurrence, ...filtered];
     });
 
+    // Força um recarregamento para re-ordenar a lista com o item atualizado no topo
     await loadOccurrences();
   }
 
-  // ✅ Renderiza filtros ativos
+  // ✅ Renderiza filtros ativos (Mantido)
   function ActiveFilters({ filters }: { filters: OccurrenceFilters }) {
     const parts: string[] = [];
 
@@ -260,6 +226,7 @@ export default function OccurrencesPage() {
     ? occurrences
     : occurrences.filter((o) => o.regiao && canAccessRegion(o.regiao));
 
+  // --- ESTRUTURA DE RENDERIZAÇÃO CORRIGIDA ---
   return (
     <ProtectedRoute allowedRoles={["OPERADOR", "CHEFE", "ADMIN"]}>
       <View style={{ flex: 1, paddingBottom: customBottomPadding }}>
@@ -274,39 +241,46 @@ export default function OccurrencesPage() {
         >
           <ActiveFilters filters={filters} />
 
-          {loading ? (
+          {/* 1. MOSTRAR CARREGAMENTO INICIAL APENAS SE A LISTA ESTIVER VAZIA */}
+          {filteredOccurrences.length === 0 && loading ? (
             <ActivityIndicator
               size="large"
               color="#6C2020"
               style={{ marginTop: 40 }}
             />
-          ) : filteredOccurrences.length === 0 ? (
-            <Text style={{ textAlign: "center", marginTop: 40 }}>
-              Nenhuma ocorrência encontrada.
-            </Text>
           ) : (
-            <OccurrencesList
-              data={filteredOccurrences}
-              onLoadMore={handleLoadMore}
-              hasMore={hasMore}
-              loading={loading}
-              onSelect={async (occurrence) => {
-                if (
-                  !adminOrChefe &&
-                  !(occurrence.regiao && canAccessRegion(occurrence.regiao))
-                ) {
-                  Alert.alert(
-                    "Acesso negado",
-                    "Você não tem permissão visualizar ocorrências de outra região."
-                  );
-                  return;
-                }
+            // 2. A LISTA ESTÁ SEMPRE MONTADA SE HOUVER DADOS OU APÓS O PRIMEIRO LOAD
+            <>
+              {filteredOccurrences.length === 0 && !loading ? (
+                <Text style={{ textAlign: "center", marginTop: 40 }}>
+                  Nenhuma ocorrência encontrada.
+                </Text>
+              ) : (
+                <OccurrencesList
+                  data={filteredOccurrences}
+                  onLoadMore={handleLoadMore}
+                  hasMore={hasMore}
+                  // O 'loading' é enviado para que o footer da lista mostre o spinner
+                  loading={loading}
+                  onSelect={async (occurrence) => {
+                    if (
+                      !adminOrChefe &&
+                      !(occurrence.regiao && canAccessRegion(occurrence.regiao))
+                    ) {
+                      Alert.alert(
+                        "Acesso negado",
+                        "Você não tem permissão visualizar ocorrências de outra região."
+                      );
+                      return;
+                    }
 
-                setSelectedOccurrence(occurrence);
-                await loadAnexos(occurrence.id);
-                setModalVisible(true);
-              }}
-            />
+                    setSelectedOccurrence(occurrence);
+                    await loadAnexos(occurrence.id);
+                    setModalVisible(true);
+                  }}
+                />
+              )}
+            </>
           )}
 
           {selectedOccurrence &&
